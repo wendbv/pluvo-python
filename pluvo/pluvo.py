@@ -164,17 +164,13 @@ class Pluvo:
 
         return data
 
-    def set_course(self, course):
-        if 'id' in course:
-            return self._put('course/{}/'.format(course['id']), course)
-        else:
-            return self._post('course/', course)
+    def get_course(self, course_id):
+        return self._get('course/{}/'.format(course_id))
 
     def get_courses(self, offset=None, limit=None, title=None,
                     description=None, published_from=None, published_to=None,
                     student_id=None, creator_id=None, creation_date_from=None,
                     creation_date_to=None):
-        """Get a list of courses."""
         params = {
             'offset': offset, 'limit': limit, 'title': title,
             'description': description, 'published_from': published_from,
@@ -184,9 +180,51 @@ class Pluvo:
         }
         return self._get_multiple('course/', params=params)
 
+    def set_course(self, course):
+        if 'id' in course:
+            return self._put('course/{}/'.format(course['id']), course)
+        else:
+            return self._post('course/', course)
+
+    def set_organisation(self, organisation):
+        if 'id' in organisation:
+            return self._put(
+                'organisation/{}/'.format(organisation['id']), organisation)
+        else:
+            return self._post('organisation/', organisation)
+
+    def get_s3_upload_token(self, filename, media_type):
+        return self._get(
+            'media/s3_upload_token/',
+            params={'filename': filename, 'media_type': media_type})
+
+    def get_token(self, user_id, course_id, token_type):
+        """Get a token for an user to access a course.
+
+        `token_type` can be `student` or `manager`."""
+        return self._get('user/{}/course/{}/token/{}/'.format(
+            user_id, course_id, token_type))
+
     def get_user(self, user_id):
-        """Get a specific user."""
         return self._get('user/{}/'.format(user_id))
+
+    def get_users(self, offset=None, limit=None, name=None,
+                  creation_date_from=None, creation_date_to=None,
+                  created_course_id=None, following_course_id=None):
+        params = {
+            'offset': offset, 'limit': limit, 'name': name,
+            'creation_date_from': creation_date_from,
+            'creation_date_to': creation_date_to,
+            'created_course_id': created_course_id,
+            'following_course_id': following_course_id
+        }
+        return self._get_multiple('user/', params=params)
+
+    def set_user(self, user):
+        if 'id' in user:
+            return self._put('user/{}/'.format(user['id']), user)
+        else:
+            return self._post('user/', user)
 
     def get_version(self):
         """Get the Pluvo API version."""

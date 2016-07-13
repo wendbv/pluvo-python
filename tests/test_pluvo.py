@@ -415,6 +415,16 @@ def test_pluvo_set_course_post(mocker):
     p._put.assert_not_called()
 
 
+def test_pluvo_get_course(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_get')
+
+    retval = p.get_course(1)
+
+    assert retval == p._get.return_value
+    p._get.assert_called_once_with('course/1/')
+
+
 def test_pluvo_get_courses(mocker):
     p = pluvo.Pluvo()
     mocker.patch.object(p, '_get_multiple')
@@ -432,6 +442,52 @@ def test_pluvo_get_courses(mocker):
         })
 
 
+def test_pluvo_set_organisation_put(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_put')
+    mocker.patch.object(p, '_post')
+
+    retval = p.set_organisation({'id': 1})
+
+    assert retval == p._put.return_value
+    p._put.assert_called_once_with('organisation/1/', {'id': 1})
+    p._post.assert_not_called()
+
+
+def test_pluvo_set_organisation_post(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_put')
+    mocker.patch.object(p, '_post')
+
+    retval = p.set_organisation({'test': 1})
+
+    assert retval == p._post.return_value
+    p._post.assert_called_once_with('organisation/', {'test': 1})
+    p._put.assert_not_called()
+
+
+def test_pluvo_get_s3_upload_token(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_get')
+
+    retval = p.get_s3_upload_token('filename.jpg', 'image/jpeg')
+
+    assert retval == p._get.return_value
+    p._get.assert_called_once_with(
+        'media/s3_upload_token/',
+        params={'filename': 'filename.jpg', 'media_type': 'image/jpeg'})
+
+
+def test_pluvo_get_token(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_get')
+
+    retval = p.get_token(1, 2, 'student')
+
+    assert retval == p._get.return_value
+    p._get.assert_called_once_with('user/1/course/2/token/student/')
+
+
 def test_pluvo_get_user(mocker):
     p = pluvo.Pluvo()
     mocker.patch.object(p, '_get')
@@ -440,6 +496,45 @@ def test_pluvo_get_user(mocker):
 
     assert retval == p._get.return_value
     p._get.assert_called_once_with('user/1/')
+
+
+def test_pluvo_get_users(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_get_multiple')
+
+    retval = p.get_users(1, 2, 3, 4, 5, 6, 7)
+
+    assert retval == p._get_multiple.return_value
+    p._get_multiple.assert_called_once_with(
+        'user/', params={
+            'offset': 1, 'limit': 2, 'name': 3,
+            'creation_date_from': 4, 'creation_date_to': 5,
+            'created_course_id': 6, 'following_course_id': 7
+        })
+
+
+def test_pluvo_set_user_put(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_put')
+    mocker.patch.object(p, '_post')
+
+    retval = p.set_user({'id': 1})
+
+    assert retval == p._put.return_value
+    p._put.assert_called_once_with('user/1/', {'id': 1})
+    p._post.assert_not_called()
+
+
+def test_pluvo_set_user_post(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_put')
+    mocker.patch.object(p, '_post')
+
+    retval = p.set_user({'test': 1})
+
+    assert retval == p._post.return_value
+    p._post.assert_called_once_with('user/', {'test': 1})
+    p._put.assert_not_called()
 
 
 def test_pluvo_get_version(mocker):
