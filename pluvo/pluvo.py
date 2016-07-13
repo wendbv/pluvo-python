@@ -88,6 +88,13 @@ class PluvoGenerator:
 
 
 class Pluvo:
+    """Interface to the Pluvo API
+
+    Set authentication data using `client_id` and `client_secret` or
+    `token`.
+    The API url can be set using `api_url`, default is the Pluvo API
+    production url.
+    Page sizes for the list API calls can be set using `page_size`."""
 
     def __init__(self, client_id=None, client_secret=None, token=None,
                  api_url=None, page_size=None):
