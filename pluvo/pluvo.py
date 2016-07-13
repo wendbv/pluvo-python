@@ -1,4 +1,5 @@
 import copy
+import json
 import requests
 
 
@@ -100,18 +101,28 @@ class Pluvo:
         else:
             self.page_size = DEFAULT_PAGE_SIZE
 
-    def _get(self, endpoint, params=None):
-        headers = {}
+    def _set_auth_headers(self, headers=None):
+        if headers is None:
+            headers = {}
+
+        if self.client_id:
+            headers['client_id'] = self.client_id
+            headers['client_secret'] = self.client_secret
+
+        return headers
+
+    def _set_auth_params(self, params=None):
         if params is None:
             params = {}
 
-        if self.client_id:
-            headers = {
-                'client_id': self.client_id,
-                'client_secret': self.client_secret
-            }
-        elif self.token:
+        if self.token:
             params['token'] = self.token
+
+        return params
+
+    def _get(self, endpoint, params=None):
+        headers = self._set_auth_headers()
+        params = self._set_auth_params(params)
 
         url = '{}{}'.format(self.api_url, endpoint)
         r = requests.get(url, params=params, headers=headers)
@@ -124,6 +135,40 @@ class Pluvo:
 
     def _get_multiple(self, endpoint, params=None):
         return PluvoGenerator(pluvo=self, endpoint=endpoint, params=params)
+
+    def _put(self, endpoint, data, params=None):
+        headers = self._set_auth_headers()
+        params = self._set_auth_params(params)
+
+        url = '{}{}'.format(self.api_url, endpoint)
+        data = json.dumps(data)
+        r = requests.put(url, params=params, headers=headers, data=data)
+        data = r.json()
+
+        if r.status_code != 200:
+            raise PluvoRequestException(data['message'], r.status_code)
+
+        return data
+
+    def _post(self, endpoint, data, params=None):
+        headers = self._set_auth_headers()
+        params = self._set_auth_params(params)
+
+        url = '{}{}'.format(self.api_url, endpoint)
+        data = json.dumps(data)
+        r = requests.post(url, params=params, headers=headers, data=data)
+        data = r.json()
+
+        if r.status_code != 200:
+            raise PluvoRequestException(data['message'], r.status_code)
+
+        return data
+
+    def set_course(self, course):
+        if 'id' in course:
+            return self._put('course/{}/'.format(course['id']), course)
+        else:
+            return self._post('course/', course)
 
     def get_courses(self, offset=None, limit=None, title=None,
                     description=None, published_from=None, published_to=None,

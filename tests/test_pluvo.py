@@ -189,6 +189,56 @@ def test_pluvo_init_page_size():
     assert p.page_size == 'page_size'
 
 
+def test_pluvo_set_auth_headers():
+    p = pluvo.Pluvo(client_id='client_id', client_secret='client_secret')
+
+    retval = p._set_auth_headers()
+
+    assert retval == {'client_id': 'client_id',
+                      'client_secret': 'client_secret'}
+
+    retval = p._set_auth_headers(headers={'test': 1})
+
+    assert retval == {'client_id': 'client_id',
+                      'client_secret': 'client_secret', 'test': 1}
+
+
+def test_pluvo_set_auth_headers_no_credentials():
+    p = pluvo.Pluvo()
+
+    retval = p._set_auth_headers()
+
+    assert retval == {}
+
+    retval = p._set_auth_headers(headers={'test': 1})
+
+    assert retval == {'test': 1}
+
+
+def test_pluvo_set_auth_params():
+    p = pluvo.Pluvo(token='token')
+
+    retval = p._set_auth_params()
+
+    assert retval == {'token': 'token'}
+
+    retval = p._set_auth_params(params={'test': 1})
+
+    assert retval == {'token': 'token', 'test': 1}
+
+
+def test_pluvo_set_auth_params_no_token():
+    p = pluvo.Pluvo()
+
+    retval = p._set_auth_params()
+
+    assert retval == {}
+
+    retval = p._set_auth_params(params={'test': 1})
+
+    assert retval == {'test': 1}
+
+
 def test_pluvo_get(mocker):
     p = pluvo.Pluvo()
     requests_get_mock = mocker.patch(
@@ -275,6 +325,94 @@ def test_pluvo_get_multiple(mocker):
 
     pluvo_generator_mock.assert_called_once_with(
         pluvo=p, endpoint='endpoint', params='params')
+
+
+def test_pluvo_put(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_set_auth_params')
+    mocker.patch.object(p, '_set_auth_headers')
+    requests_put_mock = mocker.patch(
+        'requests.put', return_value=mocker.MagicMock(status_code=200))
+
+    retval = p._put('endpoint', {'test': 1}, params='params')
+
+    assert retval == requests_put_mock.return_value.json()
+    p._set_auth_params.assert_called_once_with('params')
+    p._set_auth_headers.assert_called_once_with()
+    requests_put_mock.assert_called_once_with(
+        '{}endpoint'.format(DEFAULT_API_URL),
+        params=p._set_auth_params.return_value,
+        headers=p._set_auth_headers.return_value, data='{"test": 1}')
+
+
+def test_pluvo_put_request_error(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch('requests.put', return_value=mocker.MagicMock(
+            status_code=400, json=mocker.MagicMock(
+                return_value={'message': 'error message'})))
+
+    with pytest.raises(pluvo.PluvoRequestException) as exc_info:
+        p._put('url', 'data')
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.message == 'error message'
+    assert str(exc_info.value) == 'HTTP status 400 - error message'
+
+
+def test_pluvo_post(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_set_auth_params')
+    mocker.patch.object(p, '_set_auth_headers')
+    requests_post_mock = mocker.patch(
+        'requests.post', return_value=mocker.MagicMock(status_code=200))
+
+    retval = p._post('endpoint', {'test': 1}, params='params')
+
+    assert retval == requests_post_mock.return_value.json()
+    p._set_auth_params.assert_called_once_with('params')
+    p._set_auth_headers.assert_called_once_with()
+    requests_post_mock.assert_called_once_with(
+        '{}endpoint'.format(DEFAULT_API_URL),
+        params=p._set_auth_params.return_value,
+        headers=p._set_auth_headers.return_value, data='{"test": 1}')
+
+
+def test_pluvo_post_request_error(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch('requests.post', return_value=mocker.MagicMock(
+            status_code=400, json=mocker.MagicMock(
+                return_value={'message': 'error message'})))
+
+    with pytest.raises(pluvo.PluvoRequestException) as exc_info:
+        p._post('url', 'data')
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.message == 'error message'
+    assert str(exc_info.value) == 'HTTP status 400 - error message'
+
+
+def test_pluvo_set_course_put(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_put')
+    mocker.patch.object(p, '_post')
+
+    retval = p.set_course({'id': 1})
+
+    assert retval == p._put.return_value
+    p._put.assert_called_once_with('course/1/', {'id': 1})
+    p._post.assert_not_called()
+
+
+def test_pluvo_set_course_post(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_put')
+    mocker.patch.object(p, '_post')
+
+    retval = p.set_course({'test': 1})
+
+    assert retval == p._post.return_value
+    p._post.assert_called_once_with('course/', {'test': 1})
+    p._put.assert_not_called()
 
 
 def test_pluvo_get_courses(mocker):
