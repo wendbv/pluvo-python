@@ -2,7 +2,7 @@ from mock import call
 import pytest
 
 import pluvo
-from pluvo.pluvo import PluvoGenerator, DEFAULT_API_URL, DEFAULT_PAGE_SIZE
+from pluvo import PluvoGenerator, DEFAULT_API_URL, DEFAULT_PAGE_SIZE
 
 
 class Multiple:
