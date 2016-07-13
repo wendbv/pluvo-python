@@ -22,6 +22,18 @@ class PluvoAPIException(PluvoException):
 
 
 class PluvoGenerator:
+    """Returned for list API calls
+
+    Immediatly gets the first page of a list API call. The length is set
+    using the `count` result from the call, so is not nessecary to get
+    all items to know the total count.
+
+    Page size can be set when instantiating the `Pluvo` object using
+    `page_size`, otherwise the `DEFAULT_PAGE_SIZE` is used.
+
+    Items are yielded using a generator. When the items from the first page
+    request are all yielded, the next page is retrieved."""
+
     def __init__(self, pluvo, endpoint, params=None):
         self.pluvo = pluvo
         self.endpoint = endpoint
