@@ -11,12 +11,13 @@ class PluvoException(Exception):
     pass
 
 
-class PluvoRequestException(PluvoException):
+class PluvoAPIException(PluvoException):
+    """Raised when the API gives an error."""
 
     def __init__(self, message, status_code):
         self.message = message
         self.status_code = status_code
-        super(PluvoRequestException, self).__init__(
+        super(PluvoAPIException, self).__init__(
             'HTTP status {} - {}'.format(status_code, message))
 
 
@@ -129,7 +130,7 @@ class Pluvo:
         data = r.json()
 
         if r.status_code != 200:
-            raise PluvoRequestException(data['message'], r.status_code)
+            raise PluvoAPIException(data['message'], r.status_code)
 
         return data
 
@@ -146,7 +147,7 @@ class Pluvo:
         data = r.json()
 
         if r.status_code != 200:
-            raise PluvoRequestException(data['message'], r.status_code)
+            raise PluvoAPIException(data['message'], r.status_code)
 
         return data
 
@@ -160,7 +161,7 @@ class Pluvo:
         data = r.json()
 
         if r.status_code != 200:
-            raise PluvoRequestException(data['message'], r.status_code)
+            raise PluvoAPIException(data['message'], r.status_code)
 
         return data
 

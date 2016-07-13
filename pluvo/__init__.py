@@ -1,1 +1,1 @@
-from .pluvo import Pluvo, PluvoException, PluvoRequestException  # noqa
+from .pluvo import Pluvo, PluvoException, PluvoAPIException  # noqa
