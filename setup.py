@@ -19,6 +19,6 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
-    install_requires=["coverage", "pytest", "pytest-cov", "pytest-flake8",
+    install_requires=["coverage", "pytest>=2.7", "pytest-cov", "pytest-flake8",
                       "pytest-mock", "requests"],
 )
