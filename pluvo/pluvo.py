@@ -149,7 +149,7 @@ class Pluvo:
         data = r.json()
 
         if r.status_code != 200:
-            raise PluvoAPIException(data['message'], r.status_code)
+            raise PluvoAPIException(data['error'], r.status_code)
 
         return data
 
@@ -166,7 +166,7 @@ class Pluvo:
         data = r.json()
 
         if r.status_code != 200:
-            raise PluvoAPIException(data['message'], r.status_code)
+            raise PluvoAPIException(data['error'], r.status_code)
 
         return data
 
@@ -180,7 +180,7 @@ class Pluvo:
         data = r.json()
 
         if r.status_code != 200:
-            raise PluvoAPIException(data['message'], r.status_code)
+            raise PluvoAPIException(data['error'], r.status_code)
 
         return data
 

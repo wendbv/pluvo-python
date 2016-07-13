@@ -307,7 +307,7 @@ def test_pluvo_get_request_error(mocker):
     p = pluvo.Pluvo()
     mocker.patch('requests.get', return_value=mocker.MagicMock(
             status_code=400, json=mocker.MagicMock(
-                return_value={'message': 'error message'})))
+                return_value={'error': 'error message'})))
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
         p._get('url')
@@ -349,7 +349,7 @@ def test_pluvo_put_request_error(mocker):
     p = pluvo.Pluvo()
     mocker.patch('requests.put', return_value=mocker.MagicMock(
             status_code=400, json=mocker.MagicMock(
-                return_value={'message': 'error message'})))
+                return_value={'error': 'error message'})))
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
         p._put('url', 'data')
@@ -381,7 +381,7 @@ def test_pluvo_post_request_error(mocker):
     p = pluvo.Pluvo()
     mocker.patch('requests.post', return_value=mocker.MagicMock(
             status_code=400, json=mocker.MagicMock(
-                return_value={'message': 'error message'})))
+                return_value={'error': 'error message'})))
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
         p._post('url', 'data')
