@@ -482,10 +482,22 @@ def test_pluvo_get_token(mocker):
     p = pluvo.Pluvo()
     mocker.patch.object(p, '_get')
 
-    retval = p.get_token(1, 2, 'student')
+    retval = p.get_token('student', 1, 2)
 
     assert retval == p._get.return_value
-    p._get.assert_called_once_with('user/1/course/2/token/student/')
+    p._get.assert_called_once_with('user/token/student',
+                                   params={'user_id': 1, 'course_id': 2})
+
+
+def test_pluvo_get_trainer_token(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch.object(p, '_get')
+
+    retval = p.get_token('trainer', 1, 2, 3)
+
+    assert retval == p._get.return_value
+    p._get.assert_called_once_with('user/token/trainer', params={
+        'user_id': 1, 'course_id': 2, 'trainer_id': 3})
 
 
 def test_pluvo_get_user(mocker):

@@ -218,12 +218,14 @@ class Pluvo:
             'media/s3_upload_token/',
             params={'filename': filename, 'media_type': media_type})
 
-    def get_token(self, user_id, course_id, token_type):
-        """Get a token for an user to access a course.
+    def get_token(self, token_type, user_id, course_id, trainer_id=''):
+        """Get a token for a user to access a course.
 
-        `token_type` can be `student` or `manager`."""
-        return self._get('user/{}/course/{}/token/{}/'.format(
-            user_id, course_id, token_type))
+        `token_type` can be `student`, `manager`, or `trainer`."""
+        params = {'user_id': user_id, 'course_id': course_id}
+        if token_type == 'trainer':
+            params['trainer_id'] = trainer_id
+        return self._get('user/token/{}'.format(token_type), params=params)
 
     def get_user(self, user_id):
         return self._get('user/{}/'.format(user_id))
