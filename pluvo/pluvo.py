@@ -156,7 +156,8 @@ class Pluvo:
                 msg = ('The server did not return a valid JSON response '
                        '(response status code: {}). If you have a custom '
                        '`api_url`, ensure that it is correct '
-                       '(e.g. http://api.pluvo.co/api/).')
+                       '(e.g. http://api.pluvo.co/api/).'
+                       .format(r.status_code))
             raise PluvoException(msg)
 
         if r.status_code != 200:
