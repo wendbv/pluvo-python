@@ -318,6 +318,33 @@ def test_pluvo_get_request_error(mocker):
     assert str(exc_info.value) == 'HTTP status 400 - error message'
 
 
+def test_pluvo_request_500_error(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
+        status_code=500, json=mocker.MagicMock(side_effect=ValueError())))
+
+    with pytest.raises(pluvo.PluvoException):
+        p._request('GET', 'url')
+
+
+def test_pluvo_request_no_json_response(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
+        status_code=200, json=mocker.MagicMock(side_effect=ValueError())))
+
+    with pytest.raises(pluvo.PluvoException):
+        p._request('GET', 'url')
+
+
+def test_pluvo_request_error_no_error_data(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
+        status_code=404, json=mocker.MagicMock(return_value={''})))
+
+    with pytest.raises(pluvo.PluvoException):
+        p._request('GET', 'url')
+
+
 def test_pluvo_get_multiple(mocker):
     p = pluvo.Pluvo()
     pluvo_generator_mock = mocker.patch('pluvo.pluvo.PluvoGenerator')
