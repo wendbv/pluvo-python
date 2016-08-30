@@ -160,11 +160,11 @@ class Pluvo:
                        .format(r.status_code))
             raise PluvoException(msg)
 
-        if r.status_code != 200:
+        if r.status_code < 200 or r.status_code > 299:
             if 'error' in data:
                 raise PluvoAPIException(data['error'], r.status_code)
             else:
-                msg = ('Server returned a non 200 status code, but the '
+                msg = ('Server returned a non 20x status code, but the '
                        'returned JSON contains no error message. This is '
                        'likely a bug. Contact us at '
                        'https://github.com/wendbv/pluvo/\n\nreturned JSON: '
