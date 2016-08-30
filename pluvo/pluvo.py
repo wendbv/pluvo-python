@@ -151,7 +151,7 @@ class Pluvo:
         except ValueError:
             if r.status_code == 500:
                 msg = ('Server returned a 500 error. This is likely a bug. '
-                       'Contact us at https://github.com/wendbv/pluvo/')
+                       'Contact us at https://github.com/wendbv/pluvo-python/')
             else:
                 msg = ('The server did not return a valid JSON response '
                        '(response status code: {}). If you have a custom '
@@ -167,7 +167,8 @@ class Pluvo:
                 msg = ('Server returned a non 20x status code, but the '
                        'returned JSON contains no error message. This is '
                        'likely a bug. Contact us at '
-                       'https://github.com/wendbv/pluvo/\n\nreturned JSON: '
+                       'https://github.com/wendbv/pluvo-python/'
+                       '\n\nreturned JSON: '
                        '{}'.format(repr(data)))
                 raise PluvoException(msg)
         return data
