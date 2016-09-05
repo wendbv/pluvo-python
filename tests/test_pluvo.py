@@ -22,15 +22,15 @@ def test_pluvo_generator_one_page(mocker):
         {'count': 2, 'data': [1, 2]}
     ]
 
-    _get_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _get=_get_mock)
+    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
 
     retval = PluvoGenerator(pluvo_mock, 'endpoint')
 
     assert len(retval) == 2
     assert list(retval) == [1, 2]
-    _get_mock.assert_has_calls([
-        call('endpoint', params={'limit': 2, 'offset': 0})])
+    _request_mock.assert_has_calls([
+        call('GET', 'endpoint', params={'limit': 2, 'offset': 0})])
 
 
 def test_pluvo_generator_two_pages(mocker):
@@ -39,16 +39,16 @@ def test_pluvo_generator_two_pages(mocker):
         {'count': 4, 'data': [3, 4]}
     ]
 
-    _get_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _get=_get_mock)
+    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
 
     retval = PluvoGenerator(pluvo_mock, 'endpoint')
 
     assert len(retval) == 4
     assert list(retval) == [1, 2, 3, 4]
-    _get_mock.assert_has_calls([
-        call('endpoint', params={'limit': 2, 'offset': 0}),
-        call('endpoint', params={'limit': 2, 'offset': 2})
+    _request_mock.assert_has_calls([
+        call('GET', 'endpoint', params={'limit': 2, 'offset': 0}),
+        call('GET', 'endpoint', params={'limit': 2, 'offset': 2})
     ])
 
 
@@ -58,16 +58,16 @@ def test_pluvo_generator_limit(mocker):
         {'count': 4, 'data': [3, 4]}
     ]
 
-    _get_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _get=_get_mock)
+    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
 
     retval = PluvoGenerator(pluvo_mock, 'endpoint', params={'limit': 3})
 
     assert len(retval) == 3
     assert list(retval) == [1, 2, 3]
-    _get_mock.assert_has_calls([
-        call('endpoint', params={'limit': 2, 'offset': 0}),
-        call('endpoint', params={'limit': 1, 'offset': 2})
+    _request_mock.assert_has_calls([
+        call('GET', 'endpoint', params={'limit': 2, 'offset': 0}),
+        call('GET', 'endpoint', params={'limit': 1, 'offset': 2})
     ])
 
 
@@ -76,15 +76,15 @@ def test_pluvo_generator_offset(mocker):
         {'count': 4, 'data': [3, 4]}
     ]
 
-    _get_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _get=_get_mock)
+    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
 
     retval = PluvoGenerator(pluvo_mock, 'endpoint', params={'offset': 2})
 
     assert len(retval) == 2
     assert list(retval) == [3, 4]
-    _get_mock.assert_has_calls([
-        call('endpoint', params={'limit': 2, 'offset': 2})
+    _request_mock.assert_has_calls([
+        call('GET', 'endpoint', params={'limit': 2, 'offset': 2})
     ])
 
 
@@ -93,16 +93,16 @@ def test_pluvo_generator_limit_and_offset(mocker):
         {'count': 1, 'data': [3]}
     ]
 
-    _get_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _get=_get_mock)
+    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
 
     retval = PluvoGenerator(pluvo_mock, 'endpoint',
                             params={'limit': 1, 'offset': 2})
 
     assert len(retval) == 1
     assert list(retval) == [3]
-    _get_mock.assert_has_calls([
-        call('endpoint', params={'limit': 1, 'offset': 2})
+    _request_mock.assert_has_calls([
+        call('GET', 'endpoint', params={'limit': 1, 'offset': 2})
     ])
 
 
@@ -112,16 +112,16 @@ def test_pluvo_generator_retrieving_less_items(mocker):
         {'count': 3, 'data': []}
     ]
 
-    _get_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _get=_get_mock)
+    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
 
     retval = PluvoGenerator(pluvo_mock, 'endpoint')
 
     assert len(retval) == 3
     assert list(retval) == [1, 2]
-    _get_mock.assert_has_calls([
-        call('endpoint', params={'limit': 2, 'offset': 0}),
-        call('endpoint', params={'limit': 1, 'offset': 2})
+    _request_mock.assert_has_calls([
+        call('GET', 'endpoint', params={'limit': 2, 'offset': 0}),
+        call('GET', 'endpoint', params={'limit': 1, 'offset': 2})
     ])
 
 
@@ -241,80 +241,108 @@ def test_pluvo_set_auth_params_no_token():
 
 def test_pluvo_get(mocker):
     p = pluvo.Pluvo()
-    requests_get_mock = mocker.patch(
-        'requests.get', return_value=mocker.MagicMock(status_code=200))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(status_code=200))
 
-    retval = p._get('url')
+    retval = p._request('GET', 'url')
 
-    assert retval == requests_get_mock.return_value.json()
-    requests_get_mock.assert_called_once_with(
-        '{}url'.format(DEFAULT_API_URL), params={}, headers={})
+    assert retval == requests_mock.return_value.json()
+    requests_mock.assert_called_once_with(
+        'GET', '{}url'.format(DEFAULT_API_URL), params={}, headers={},
+        json=None)
 
 
 def test_pluvo_get_with_client_credentials(mocker):
     p = pluvo.Pluvo(client_id='client_id', client_secret='client_secret')
-    requests_get_mock = mocker.patch(
-        'requests.get', return_value=mocker.MagicMock(status_code=200))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(status_code=200))
 
-    retval = p._get('url')
+    retval = p._request('GET', 'url')
 
-    assert retval == requests_get_mock.return_value.json()
-    requests_get_mock.assert_called_once_with(
-        '{}url'.format(DEFAULT_API_URL), params={},
+    assert retval == requests_mock.return_value.json()
+    requests_mock.assert_called_once_with(
+        'GET', '{}url'.format(DEFAULT_API_URL), params={}, json=None,
         headers={'client_id': 'client_id', 'client_secret': 'client_secret'})
 
 
 def test_pluvo_get_with_token(mocker):
     p = pluvo.Pluvo(token='token')
-    requests_get_mock = mocker.patch(
-        'requests.get', return_value=mocker.MagicMock(status_code=200))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(status_code=200))
 
-    retval = p._get('url')
+    retval = p._request('GET', 'url')
 
-    assert retval == requests_get_mock.return_value.json()
-    requests_get_mock.assert_called_once_with(
-        '{}url'.format(DEFAULT_API_URL), params={'token': 'token'},
-        headers={})
+    assert retval == requests_mock.return_value.json()
+    requests_mock.assert_called_once_with(
+        'GET', '{}url'.format(DEFAULT_API_URL), params={'token': 'token'},
+        json=None, headers={})
 
 
 def test_pluvo_get_with_params(mocker):
     p = pluvo.Pluvo()
-    requests_get_mock = mocker.patch(
-        'requests.get', return_value=mocker.MagicMock(status_code=200))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(status_code=200))
 
-    retval = p._get('url', params={'param': 1})
+    retval = p._request('GET', 'url', params={'param': 1})
 
-    assert retval == requests_get_mock.return_value.json()
-    requests_get_mock.assert_called_once_with(
-        '{}url'.format(DEFAULT_API_URL), params={'param': 1},
-        headers={})
+    assert retval == requests_mock.return_value.json()
+    requests_mock.assert_called_once_with(
+        'GET', '{}url'.format(DEFAULT_API_URL), params={'param': 1},
+        json=None, headers={})
 
 
 def test_pluvo_get_with_params_and_token(mocker):
     p = pluvo.Pluvo(token='token')
-    requests_get_mock = mocker.patch(
-        'requests.get', return_value=mocker.MagicMock(status_code=200))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(status_code=200))
 
-    retval = p._get('url', params={'param': 1})
+    retval = p._request('GET', 'url', params={'param': 1})
 
-    assert retval == requests_get_mock.return_value.json()
-    requests_get_mock.assert_called_once_with(
-        '{}url'.format(DEFAULT_API_URL),
-        params={'param': 1, 'token': 'token'}, headers={})
+    assert retval == requests_mock.return_value.json()
+    requests_mock.assert_called_once_with(
+        'GET', '{}url'.format(DEFAULT_API_URL),
+        json=None, params={'param': 1, 'token': 'token'}, headers={})
 
 
 def test_pluvo_get_request_error(mocker):
     p = pluvo.Pluvo()
-    mocker.patch('requests.get', return_value=mocker.MagicMock(
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=400, json=mocker.MagicMock(
             return_value={'error': 'error message'})))
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
-        p._get('url')
+        p._request('GET', 'url')
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.message == 'error message'
     assert str(exc_info.value) == 'HTTP status 400 - error message'
+
+
+def test_pluvo_request_500_error(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
+        status_code=500, json=mocker.MagicMock(side_effect=ValueError())))
+
+    with pytest.raises(pluvo.PluvoException):
+        p._request('GET', 'url')
+
+
+def test_pluvo_request_no_json_response(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
+        status_code=200, json=mocker.MagicMock(side_effect=ValueError())))
+
+    with pytest.raises(pluvo.PluvoException):
+        p._request('GET', 'url')
+
+
+def test_pluvo_request_error_no_error_data(mocker):
+    p = pluvo.Pluvo()
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
+        status_code=404, json=mocker.MagicMock(return_value={''})))
+
+    with pytest.raises(pluvo.PluvoException):
+        p._request('GET', 'url')
 
 
 def test_pluvo_get_multiple(mocker):
@@ -331,28 +359,28 @@ def test_pluvo_put(mocker):
     p = pluvo.Pluvo()
     mocker.patch.object(p, '_set_auth_params')
     mocker.patch.object(p, '_set_auth_headers')
-    requests_put_mock = mocker.patch(
-        'requests.put', return_value=mocker.MagicMock(status_code=200))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(status_code=200))
 
-    retval = p._put('endpoint', {'test': 1}, params='params')
+    retval = p._request('PUT', 'endpoint', {'test': 1}, params='params')
 
-    assert retval == requests_put_mock.return_value.json()
+    assert retval == requests_mock.return_value.json()
     p._set_auth_params.assert_called_once_with('params')
     p._set_auth_headers.assert_called_once_with()
-    requests_put_mock.assert_called_once_with(
-        '{}endpoint'.format(DEFAULT_API_URL),
+    requests_mock.assert_called_once_with(
+        'PUT', '{}endpoint'.format(DEFAULT_API_URL),
         params=p._set_auth_params.return_value,
-        headers=p._set_auth_headers.return_value, data='{"test": 1}')
+        headers=p._set_auth_headers.return_value, json={"test": 1})
 
 
 def test_pluvo_put_request_error(mocker):
     p = pluvo.Pluvo()
-    mocker.patch('requests.put', return_value=mocker.MagicMock(
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=400, json=mocker.MagicMock(
             return_value={'error': 'error message'})))
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
-        p._put('url', 'data')
+        p._request('PUT', 'url', 'data')
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.message == 'error message'
@@ -363,28 +391,28 @@ def test_pluvo_post(mocker):
     p = pluvo.Pluvo()
     mocker.patch.object(p, '_set_auth_params')
     mocker.patch.object(p, '_set_auth_headers')
-    requests_post_mock = mocker.patch(
-        'requests.post', return_value=mocker.MagicMock(status_code=200))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(status_code=200))
 
-    retval = p._post('endpoint', {'test': 1}, params='params')
+    retval = p._request('POST', 'endpoint', {'test': 1}, params='params')
 
-    assert retval == requests_post_mock.return_value.json()
+    assert retval == requests_mock.return_value.json()
     p._set_auth_params.assert_called_once_with('params')
     p._set_auth_headers.assert_called_once_with()
-    requests_post_mock.assert_called_once_with(
-        '{}endpoint'.format(DEFAULT_API_URL),
+    requests_mock.assert_called_once_with(
+        'POST', '{}endpoint'.format(DEFAULT_API_URL),
         params=p._set_auth_params.return_value,
-        headers=p._set_auth_headers.return_value, data='{"test": 1}')
+        headers=p._set_auth_headers.return_value, json={"test": 1})
 
 
 def test_pluvo_post_request_error(mocker):
     p = pluvo.Pluvo()
-    mocker.patch('requests.post', return_value=mocker.MagicMock(
+    mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=400, json=mocker.MagicMock(
             return_value={'error': 'error message'})))
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
-        p._post('url', 'data')
+        p._request('POST', 'url', 'data')
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.message == 'error message'
@@ -393,36 +421,32 @@ def test_pluvo_post_request_error(mocker):
 
 def test_pluvo_set_course_put(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_put')
-    mocker.patch.object(p, '_post')
+    mocker.patch.object(p, '_request')
 
     retval = p.set_course({'id': 1})
 
-    assert retval == p._put.return_value
-    p._put.assert_called_once_with('course/1/', {'id': 1})
-    p._post.assert_not_called()
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('PUT', 'course/1/', {'id': 1})
 
 
 def test_pluvo_set_course_post(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_put')
-    mocker.patch.object(p, '_post')
+    mocker.patch.object(p, '_request')
 
     retval = p.set_course({'test': 1})
 
-    assert retval == p._post.return_value
-    p._post.assert_called_once_with('course/', {'test': 1})
-    p._put.assert_not_called()
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('POST', 'course/', {'test': 1})
 
 
 def test_pluvo_get_course(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_get')
+    mocker.patch.object(p, '_request')
 
     retval = p.get_course(1)
 
-    assert retval == p._get.return_value
-    p._get.assert_called_once_with('course/1/')
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('GET', 'course/1/')
 
 
 def test_pluvo_get_courses(mocker):
@@ -444,70 +468,66 @@ def test_pluvo_get_courses(mocker):
 
 def test_pluvo_set_organisation_put(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_put')
-    mocker.patch.object(p, '_post')
+    mocker.patch.object(p, '_request')
 
     retval = p.set_organisation({'id': 1})
 
-    assert retval == p._put.return_value
-    p._put.assert_called_once_with('organisation/1/', {'id': 1})
-    p._post.assert_not_called()
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('PUT', 'organisation/1/', {'id': 1})
 
 
 def test_pluvo_set_organisation_post(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_put')
-    mocker.patch.object(p, '_post')
+    mocker.patch.object(p, '_request')
 
     retval = p.set_organisation({'test': 1})
 
-    assert retval == p._post.return_value
-    p._post.assert_called_once_with('organisation/', {'test': 1})
-    p._put.assert_not_called()
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('POST', 'organisation/', {'test': 1})
 
 
 def test_pluvo_get_s3_upload_token(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_get')
+    mocker.patch.object(p, '_request')
 
     retval = p.get_s3_upload_token('filename.jpg', 'image/jpeg')
 
-    assert retval == p._get.return_value
-    p._get.assert_called_once_with(
-        'media/s3_upload_token/',
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with(
+        'GET', 'media/s3_upload_token/',
         params={'filename': 'filename.jpg', 'media_type': 'image/jpeg'})
 
 
 def test_pluvo_get_token(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_get')
+    mocker.patch.object(p, '_request')
 
     retval = p.get_token('student', 1, 2)
 
-    assert retval == p._get.return_value
-    p._get.assert_called_once_with('user/token/student',
-                                   params={'user_id': 1, 'course_id': 2})
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('GET', 'user/token/student',
+                                       params={'user_id': 1, 'course_id': 2})
 
 
 def test_pluvo_get_trainer_token(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_get')
+    mocker.patch.object(p, '_request')
 
     retval = p.get_token('trainer', 1, 2, 3)
 
-    assert retval == p._get.return_value
-    p._get.assert_called_once_with('user/token/trainer', params={
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('GET', 'user/token/trainer', params={
         'user_id': 1, 'course_id': 2, 'trainer_id': 3})
 
 
 def test_pluvo_get_user(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_get')
+    mocker.patch.object(p, '_request')
 
     retval = p.get_user(1)
 
-    assert retval == p._get.return_value
-    p._get.assert_called_once_with('user/1/')
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('GET', 'user/1/')
 
 
 def test_pluvo_get_users(mocker):
@@ -527,33 +547,29 @@ def test_pluvo_get_users(mocker):
 
 def test_pluvo_set_user_put(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_put')
-    mocker.patch.object(p, '_post')
+    mocker.patch.object(p, '_request')
 
     retval = p.set_user({'id': 1})
 
-    assert retval == p._put.return_value
-    p._put.assert_called_once_with('user/1/', {'id': 1})
-    p._post.assert_not_called()
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('PUT', 'user/1/', {'id': 1})
 
 
 def test_pluvo_set_user_post(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_put')
-    mocker.patch.object(p, '_post')
+    mocker.patch.object(p, '_request')
 
     retval = p.set_user({'test': 1})
 
-    assert retval == p._post.return_value
-    p._post.assert_called_once_with('user/', {'test': 1})
-    p._put.assert_not_called()
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('POST', 'user/', {'test': 1})
 
 
 def test_pluvo_get_version(mocker):
     p = pluvo.Pluvo()
-    mocker.patch.object(p, '_get')
+    mocker.patch.object(p, '_request')
 
     retval = p.get_version()
 
-    assert retval == p._get.return_value
-    p._get.assert_called_once_with('version/')
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('GET', 'version/')

@@ -1,5 +1,4 @@
 import copy
-import json
 import requests
 
 
@@ -14,9 +13,10 @@ class PluvoException(Exception):
 class PluvoAPIException(PluvoException):
     """Raised when the API gives an error."""
 
-    def __init__(self, message, status_code):
+    def __init__(self, message, status_code, response_body):
         self.message = message
         self.status_code = status_code
+        self.response_body = response_body
         super(PluvoAPIException, self).__init__(
             'HTTP status {} - {}'.format(status_code, message))
 
@@ -24,7 +24,7 @@ class PluvoAPIException(PluvoException):
 class PluvoGenerator:
     """Returned for list API calls
 
-    Immediatly gets the first page of a list API call. The length is set
+    Immediately gets the first page of a list API call. The length is set
     using the `count` result from the call, so is not nessecary to get
     all items to know the total count.
 
@@ -54,7 +54,7 @@ class PluvoGenerator:
             self.params['offset'] = 0
 
         params = copy.copy(self.params)
-        result = self.pluvo._get(self.endpoint, params=params)
+        result = self.pluvo._request('GET', self.endpoint, params=params)
         if not self.length:
             if self.initial_limit is None \
                     or self.initial_limit > result['count']:
@@ -140,52 +140,45 @@ class Pluvo:
 
         return params
 
-    def _get(self, endpoint, params=None):
+    def _request(self, method, endpoint, data=None, params=None):
         headers = self._set_auth_headers()
         params = self._set_auth_params(params)
+        url = self.api_url + endpoint
 
-        url = '{}{}'.format(self.api_url, endpoint)
-        r = requests.get(url, params=params, headers=headers)
-        data = r.json()
+        r = requests.request(
+            method, url, params=params, json=data, headers=headers)
+        try:
+            data = r.json()
+        except ValueError:
+            if r.status_code == 500:
+                msg = ('Server returned a 500 error. This is likely a bug. '
+                       'Contact us at https://github.com/wendbv/pluvo-python/')
+            else:
+                msg = ('The server did not return a valid JSON response '
+                       '(response status code: {}). If you have a custom '
+                       '`api_url`, ensure that it is correct '
+                       '(e.g. http://api.pluvo.co/api/).'
+                       .format(r.status_code))
+            raise PluvoException(msg)
 
-        if r.status_code != 200:
-            raise PluvoAPIException(data['error'], r.status_code)
-
+        if r.status_code < 200 or r.status_code > 299:
+            if 'error' in data:
+                raise PluvoAPIException(data['error'], r.status_code, data)
+            else:
+                msg = ('Server returned a non 20x status code, but the '
+                       'returned JSON contains no error message. This is '
+                       'likely a bug. Contact us at '
+                       'https://github.com/wendbv/pluvo-python/'
+                       '\n\nreturned JSON: '
+                       '{}'.format(repr(data)))
+                raise PluvoException(msg)
         return data
 
     def _get_multiple(self, endpoint, params=None):
         return PluvoGenerator(pluvo=self, endpoint=endpoint, params=params)
 
-    def _put(self, endpoint, data, params=None):
-        headers = self._set_auth_headers()
-        params = self._set_auth_params(params)
-
-        url = '{}{}'.format(self.api_url, endpoint)
-        data = json.dumps(data)
-        r = requests.put(url, params=params, headers=headers, data=data)
-        data = r.json()
-
-        if r.status_code != 200:
-            raise PluvoAPIException(data['error'], r.status_code)
-
-        return data
-
-    def _post(self, endpoint, data, params=None):
-        headers = self._set_auth_headers()
-        params = self._set_auth_params(params)
-
-        url = '{}{}'.format(self.api_url, endpoint)
-        data = json.dumps(data)
-        r = requests.post(url, params=params, headers=headers, data=data)
-        data = r.json()
-
-        if r.status_code != 200:
-            raise PluvoAPIException(data['error'], r.status_code)
-
-        return data
-
     def get_course(self, course_id):
-        return self._get('course/{}/'.format(course_id))
+        return self._request('GET', 'course/{}/'.format(course_id))
 
     def get_courses(self, offset=None, limit=None, title=None,
                     description=None, published_from=None, published_to=None,
@@ -202,19 +195,22 @@ class Pluvo:
 
     def set_course(self, course):
         if 'id' in course:
-            return self._put('course/{}/'.format(course['id']), course)
+            return self._request('PUT', 'course/{}/'.format(course['id']),
+                                 course)
         else:
-            return self._post('course/', course)
+            return self._request('POST', 'course/', course)
 
     def set_organisation(self, organisation):
         if 'id' in organisation:
-            return self._put(
-                'organisation/{}/'.format(organisation['id']), organisation)
+            return self._request(
+                'PUT', 'organisation/{}/'.format(organisation['id']),
+                organisation)
         else:
-            return self._post('organisation/', organisation)
+            return self._request('POST', 'organisation/', organisation)
 
     def get_s3_upload_token(self, filename, media_type):
-        return self._get(
+        return self._request(
+            'GET',
             'media/s3_upload_token/',
             params={'filename': filename, 'media_type': media_type})
 
@@ -225,10 +221,11 @@ class Pluvo:
         params = {'user_id': user_id, 'course_id': course_id}
         if token_type == 'trainer':
             params['trainer_id'] = trainer_id
-        return self._get('user/token/{}'.format(token_type), params=params)
+        url = 'user/token/{}'.format(token_type)
+        return self._request('GET', url, params=params)
 
     def get_user(self, user_id):
-        return self._get('user/{}/'.format(user_id))
+        return self._request('GET', 'user/{}/'.format(user_id))
 
     def get_users(self, offset=None, limit=None, name=None,
                   creation_date_from=None, creation_date_to=None,
@@ -244,10 +241,10 @@ class Pluvo:
 
     def set_user(self, user):
         if 'id' in user:
-            return self._put('user/{}/'.format(user['id']), user)
+            return self._request('PUT', 'user/{}/'.format(user['id']), user)
         else:
-            return self._post('user/', user)
+            return self._request('POST', 'user/', user)
 
     def get_version(self):
         """Get the Pluvo API version."""
-        return self._get('version/')
+        return self._request('GET', 'version/')
