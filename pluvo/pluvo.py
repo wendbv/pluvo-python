@@ -13,9 +13,10 @@ class PluvoException(Exception):
 class PluvoAPIException(PluvoException):
     """Raised when the API gives an error."""
 
-    def __init__(self, message, status_code):
+    def __init__(self, message, status_code, response_body):
         self.message = message
         self.status_code = status_code
+        self.response_body = response_body
         super(PluvoAPIException, self).__init__(
             'HTTP status {} - {}'.format(status_code, message))
 
@@ -23,7 +24,7 @@ class PluvoAPIException(PluvoException):
 class PluvoGenerator:
     """Returned for list API calls
 
-    Immediatly gets the first page of a list API call. The length is set
+    Immediately gets the first page of a list API call. The length is set
     using the `count` result from the call, so is not nessecary to get
     all items to know the total count.
 
@@ -162,7 +163,7 @@ class Pluvo:
 
         if r.status_code < 200 or r.status_code > 299:
             if 'error' in data:
-                raise PluvoAPIException(data['error'], r.status_code)
+                raise PluvoAPIException(data['error'], r.status_code, data)
             else:
                 msg = ('Server returned a non 20x status code, but the '
                        'returned JSON contains no error message. This is '
