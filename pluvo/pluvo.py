@@ -53,6 +53,9 @@ class PluvoGenerator:
         if initial and self.initial_offset is None:
             self.params['offset'] = 0
 
+        if self.params['limit'] <= 0:
+            return {'data': []}
+
         params = copy.copy(self.params)
         result = self.pluvo._request('GET', self.endpoint, params=params)
         if not self.length:
