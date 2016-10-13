@@ -200,6 +200,9 @@ class Pluvo:
         else:
             return self._request('POST', 'course/', course)
 
+    def delete_course(self, course_id):
+        return self._request('DELETE', 'course/{}/'.format(course_id))
+
     def set_organisation(self, organisation):
         if 'id' in organisation:
             return self._request(
