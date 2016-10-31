@@ -251,6 +251,15 @@ class Pluvo:
         else:
             return self._request('POST', 'user/', user)
 
+    def get_progress_report(self, student_ids=None, course_ids=None,
+                            order_by=None):
+        params = {
+            'student_id': student_ids,
+            'course_id': course_ids,
+            'order_by': order_by
+        }
+        return self._get_multiple('progress/reports/', params=params)
+
     def get_version(self):
         """Get the Pluvo API version."""
         return self._request('GET', 'version/')
