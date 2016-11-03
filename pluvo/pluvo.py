@@ -206,6 +206,10 @@ class Pluvo:
     def delete_course(self, course_id):
         return self._request('DELETE', 'course/{}/'.format(course_id))
 
+    def set_student_courseversion(self, action, course_id, student_id):
+        url = 'course/{}/user/{}/'.format(course_id, student_id)
+        return self._request('PUT', url, {'action': action})
+
     def set_organisation(self, organisation):
         if 'id' in organisation:
             return self._request(
