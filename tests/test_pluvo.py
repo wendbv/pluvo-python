@@ -578,14 +578,14 @@ def test_pluvo_get_progress_report(mocker):
     })
 
 
-def test_pluvo_set_student_course_version(mocker):
+def test_pluvo_archive_student_course_version(mocker):
     p = pluvo.Pluvo()
     mocker.patch.object(p, '_request')
 
-    retval = p.set_student_course_version('action', 1, 2)
+    retval = p.archive_student_course_version(1, 2)
     assert retval == p._request.return_value
     p._request.assert_called_once_with(
-        'PUT', 'course/1/user/2/', {'action': 'action'})
+        'PUT', 'course/1/user/2/', {'action': 'archive'})
 
 
 def test_pluvo_get_version(mocker):
