@@ -21,6 +21,10 @@ class PluvoAPIException(PluvoException):
             'HTTP status {} - {}'.format(status_code, message))
 
 
+class PluvoMisconfigured(PluvoException):
+    """Raised when the API is not correctly configured."""
+
+
 class PluvoGenerator:
     """Returned for list API calls
 
@@ -101,12 +105,16 @@ class Pluvo:
 
     def __init__(self, client_id=None, client_secret=None, token=None,
                  api_url=None, page_size=None):
+        if not any([client_id, client_secret, token]):
+            raise PluvoMisconfigured(
+                'You need to set either client_id and client_secret, or '
+                'provide a token.')
         if (client_id and not client_secret) \
                 or (client_secret and not client_id):
-            raise PluvoException(
+            raise PluvoMisconfigured(
                 'You need to set both client_id and client_secret.')
         if client_id and token:
-            raise PluvoException(
+            raise PluvoMisconfigured(
                 'You can not use both client and token authentication '
                 'simultaneously.')
 

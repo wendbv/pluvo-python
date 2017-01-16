@@ -125,16 +125,6 @@ def test_pluvo_generator_retrieving_less_items(mocker):
     ])
 
 
-def test_pluvo_init():
-    p = pluvo.Pluvo()
-
-    assert p.client_id is None
-    assert p.client_secret is None
-    assert p.token is None
-    assert p.api_url == DEFAULT_API_URL
-    assert p.page_size == DEFAULT_PAGE_SIZE
-
-
 def test_pluvo_init_client_credentials():
     p = pluvo.Pluvo(client_id='client_id', client_secret='client_secret')
 
@@ -146,10 +136,10 @@ def test_pluvo_init_client_credentials():
 
 
 def test_pluvo_init_client_credentials_missing_one():
-    with pytest.raises(pluvo.PluvoException):
+    with pytest.raises(pluvo.PluvoMisconfigured):
         pluvo.Pluvo(client_id='client_id')
 
-    with pytest.raises(pluvo.PluvoException):
+    with pytest.raises(pluvo.PluvoMisconfigured):
         pluvo.Pluvo(client_secret='client_secret')
 
 
@@ -164,27 +154,38 @@ def test_pluvo_init_token():
 
 
 def test_pluvo_init_client_credentials_too_many():
-    with pytest.raises(pluvo.PluvoException):
+    with pytest.raises(pluvo.PluvoMisconfigured):
         pluvo.Pluvo(client_id='client_id', client_secret='client_secret',
                     token='token')
 
 
+def test_pluvo_init_no_credentials():
+    with pytest.raises(pluvo.PluvoMisconfigured):
+        pluvo.Pluvo()
+
+    with pytest.raises(pluvo.PluvoMisconfigured):
+        pluvo.Pluvo(client_id='', client_secret='')
+
+    with pytest.raises(pluvo.PluvoMisconfigured):
+        pluvo.Pluvo(client_id=None, client_secret=None)
+
+
 def test_pluvo_init_api_url():
-    p = pluvo.Pluvo(api_url='api_url')
+    p = pluvo.Pluvo(token='token', api_url='api_url')
 
     assert p.client_id is None
     assert p.client_secret is None
-    assert p.token is None
+    assert p.token == 'token'
     assert p.api_url == 'api_url'
     assert p.page_size == DEFAULT_PAGE_SIZE
 
 
 def test_pluvo_init_page_size():
-    p = pluvo.Pluvo(page_size='page_size')
+    p = pluvo.Pluvo(token='token', page_size='page_size')
 
     assert p.client_id is None
     assert p.client_secret is None
-    assert p.token is None
+    assert p.token == 'token'
     assert p.api_url == DEFAULT_API_URL
     assert p.page_size == 'page_size'
 
@@ -203,18 +204,6 @@ def test_pluvo_set_auth_headers():
                       'client_secret': 'client_secret', 'test': 1}
 
 
-def test_pluvo_set_auth_headers_no_credentials():
-    p = pluvo.Pluvo()
-
-    retval = p._set_auth_headers()
-
-    assert retval == {}
-
-    retval = p._set_auth_headers(headers={'test': 1})
-
-    assert retval == {'test': 1}
-
-
 def test_pluvo_set_auth_params():
     p = pluvo.Pluvo(token='token')
 
@@ -225,31 +214,6 @@ def test_pluvo_set_auth_params():
     retval = p._set_auth_params(params={'test': 1})
 
     assert retval == {'token': 'token', 'test': 1}
-
-
-def test_pluvo_set_auth_params_no_token():
-    p = pluvo.Pluvo()
-
-    retval = p._set_auth_params()
-
-    assert retval == {}
-
-    retval = p._set_auth_params(params={'test': 1})
-
-    assert retval == {'test': 1}
-
-
-def test_pluvo_get(mocker):
-    p = pluvo.Pluvo()
-    requests_mock = mocker.patch(
-        'requests.request', return_value=mocker.MagicMock(status_code=200))
-
-    retval = p._request('GET', 'url')
-
-    assert retval == requests_mock.return_value.json()
-    requests_mock.assert_called_once_with(
-        'GET', '{}url'.format(DEFAULT_API_URL), params={}, headers={},
-        json=None)
 
 
 def test_pluvo_get_with_client_credentials(mocker):
@@ -278,19 +242,6 @@ def test_pluvo_get_with_token(mocker):
         json=None, headers={})
 
 
-def test_pluvo_get_with_params(mocker):
-    p = pluvo.Pluvo()
-    requests_mock = mocker.patch(
-        'requests.request', return_value=mocker.MagicMock(status_code=200))
-
-    retval = p._request('GET', 'url', params={'param': 1})
-
-    assert retval == requests_mock.return_value.json()
-    requests_mock.assert_called_once_with(
-        'GET', '{}url'.format(DEFAULT_API_URL), params={'param': 1},
-        json=None, headers={})
-
-
 def test_pluvo_get_with_params_and_token(mocker):
     p = pluvo.Pluvo(token='token')
     requests_mock = mocker.patch(
@@ -305,7 +256,7 @@ def test_pluvo_get_with_params_and_token(mocker):
 
 
 def test_pluvo_get_request_error(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=400, json=mocker.MagicMock(
             return_value={'error': 'error message'})))
@@ -319,7 +270,7 @@ def test_pluvo_get_request_error(mocker):
 
 
 def test_pluvo_request_500_error(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=500, json=mocker.MagicMock(side_effect=ValueError())))
 
@@ -328,7 +279,7 @@ def test_pluvo_request_500_error(mocker):
 
 
 def test_pluvo_request_no_json_response(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=200, json=mocker.MagicMock(side_effect=ValueError())))
 
@@ -337,7 +288,7 @@ def test_pluvo_request_no_json_response(mocker):
 
 
 def test_pluvo_request_error_no_error_data(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=404, json=mocker.MagicMock(return_value={''})))
 
@@ -346,7 +297,7 @@ def test_pluvo_request_error_no_error_data(mocker):
 
 
 def test_pluvo_get_multiple(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     pluvo_generator_mock = mocker.patch('pluvo.pluvo.PluvoGenerator')
 
     p._get_multiple('endpoint', params='params')
@@ -356,7 +307,7 @@ def test_pluvo_get_multiple(mocker):
 
 
 def test_pluvo_put(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_set_auth_params')
     mocker.patch.object(p, '_set_auth_headers')
     requests_mock = mocker.patch(
@@ -374,7 +325,7 @@ def test_pluvo_put(mocker):
 
 
 def test_pluvo_put_request_error(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=400, json=mocker.MagicMock(
             return_value={'error': 'error message'})))
@@ -388,7 +339,7 @@ def test_pluvo_put_request_error(mocker):
 
 
 def test_pluvo_post(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_set_auth_params')
     mocker.patch.object(p, '_set_auth_headers')
     requests_mock = mocker.patch(
@@ -406,7 +357,7 @@ def test_pluvo_post(mocker):
 
 
 def test_pluvo_post_request_error(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch('requests.request', return_value=mocker.MagicMock(
         status_code=400, json=mocker.MagicMock(
             return_value={'error': 'error message'})))
@@ -420,7 +371,7 @@ def test_pluvo_post_request_error(mocker):
 
 
 def test_pluvo_set_course_put(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.set_course({'id': 1})
@@ -430,7 +381,7 @@ def test_pluvo_set_course_put(mocker):
 
 
 def test_pluvo_set_course_post(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.set_course({'test': 1})
@@ -440,7 +391,7 @@ def test_pluvo_set_course_post(mocker):
 
 
 def test_pluvo_get_course(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.get_course(1)
@@ -450,7 +401,7 @@ def test_pluvo_get_course(mocker):
 
 
 def test_pluvo_get_courses(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_get_multiple')
 
     retval = p.get_courses(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
@@ -467,7 +418,7 @@ def test_pluvo_get_courses(mocker):
 
 
 def test_pluvo_set_organisation_put(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.set_organisation({'id': 1})
@@ -477,7 +428,7 @@ def test_pluvo_set_organisation_put(mocker):
 
 
 def test_pluvo_set_organisation_post(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.set_organisation({'test': 1})
@@ -487,7 +438,7 @@ def test_pluvo_set_organisation_post(mocker):
 
 
 def test_pluvo_get_s3_upload_token(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.get_s3_upload_token('filename.jpg', 'image/jpeg')
@@ -499,7 +450,7 @@ def test_pluvo_get_s3_upload_token(mocker):
 
 
 def test_pluvo_get_token(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.get_token('student', 1, 2)
@@ -510,7 +461,7 @@ def test_pluvo_get_token(mocker):
 
 
 def test_pluvo_get_trainer_token(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.get_token('trainer', 1, 2, 3)
@@ -521,7 +472,7 @@ def test_pluvo_get_trainer_token(mocker):
 
 
 def test_pluvo_get_user(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.get_user(1)
@@ -531,7 +482,7 @@ def test_pluvo_get_user(mocker):
 
 
 def test_pluvo_get_users(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_get_multiple')
 
     retval = p.get_users(1, 2, 3, 4, 5, 6, 7)
@@ -546,7 +497,7 @@ def test_pluvo_get_users(mocker):
 
 
 def test_pluvo_set_user_put(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.set_user({'id': 1})
@@ -556,7 +507,7 @@ def test_pluvo_set_user_put(mocker):
 
 
 def test_pluvo_set_user_post(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.set_user({'test': 1})
@@ -566,7 +517,7 @@ def test_pluvo_set_user_post(mocker):
 
 
 def test_pluvo_get_progress_report(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_get_multiple')
 
     retval = p.get_progress_report([1, 2], [3, 4], ['-student_id'])
@@ -579,7 +530,7 @@ def test_pluvo_get_progress_report(mocker):
 
 
 def test_pluvo_archive_student_course_version(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.archive_student_course_version(1, 2)
@@ -589,7 +540,7 @@ def test_pluvo_archive_student_course_version(mocker):
 
 
 def test_pluvo_get_version(mocker):
-    p = pluvo.Pluvo()
+    p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
 
     retval = p.get_version()

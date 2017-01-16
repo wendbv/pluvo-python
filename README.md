@@ -75,14 +75,14 @@ When an API error is encountered an `PluvoAPIException` is raised.
 from pluvo import Pluvo, PluvoAPIException
 
 # Not authenticated.
-pluvo = Pluvo()
+pluvo = Pluvo(client_id='invalid', client_secret='invalid')
 
 try:
     pluvo.get_course(1)
 except PluvoAPIException as e:
-    e.message  # 'Missing token or client_id and client_secret missing in headers.'
+    e.message  # 'Provided client_id or client_secret are invalid.'
     e.status_code  # 403
-    str(e)  # 'HTTP status 403 - Missing token or client_id and client_secret missing in headers.'
+    str(e)  # 'HTTP status 403 - Provided client_id or client_secret are invalid.'
 ```
 
 ## General errors
