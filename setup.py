@@ -5,7 +5,7 @@ setup(
     name='pluvo',
     packages=['pluvo'],
     package_data={},
-    version='0.1.0',
+    version='0.1.1',
     description='Python library to access the Pluvo REST API.',
     author='Wend BV',
     author_email='info@wend.nl',
