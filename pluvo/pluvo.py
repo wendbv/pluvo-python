@@ -192,7 +192,7 @@ class Pluvo:
             'description': description, 'published_from': published_from,
             'published_to': published_to, 'student_id': student_id,
             'creator_id': creator_id, 'creation_date_from': creation_date_from,
-            'creation_date_to': creation_date_to, 'id_list':id_list
+            'creation_date_to': creation_date_to, 'id': id_list
         }
         return self._get_multiple('course/', params=params)
 
