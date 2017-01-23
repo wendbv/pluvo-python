@@ -404,7 +404,7 @@ def test_pluvo_get_courses(mocker):
     p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_get_multiple')
 
-    retval = p.get_courses(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    retval = p.get_courses(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12)
 
     assert retval == p._get_multiple.return_value
     p._get_multiple.assert_called_once_with(
@@ -413,7 +413,8 @@ def test_pluvo_get_courses(mocker):
             'description': 4, 'published_from': 5,
             'published_to': 6, 'student_id': 7,
             'creator_id': 8, 'creation_date_from': 9,
-            'creation_date_to': 10
+            'creation_date_to': 10,
+            'id': 12
         })
 
 
