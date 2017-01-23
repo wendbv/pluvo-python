@@ -414,7 +414,7 @@ def test_pluvo_get_courses(mocker):
             'published_to': 6, 'student_id': 7,
             'creator_id': 8, 'creation_date_from': 9,
             'creation_date_to': 10,
-            'sort': 11,
+            'order_by': 11,
         })
 
 
