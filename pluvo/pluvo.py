@@ -2,7 +2,7 @@ import copy
 import requests
 
 
-DEFAULT_API_URL = 'https://api.pluvo.co/api/'
+DEFAULT_API_URL = 'https://api.pluvo.co/rest/'
 DEFAULT_PAGE_SIZE = 20
 
 
@@ -168,7 +168,7 @@ class Pluvo:
                 msg = ('The server did not return a valid JSON response '
                        '(response status code: {}). If you have a custom '
                        '`api_url`, ensure that it is correct '
-                       '(e.g. http://api.pluvo.co/api/).'
+                       '(e.g. https://api.pluvo.co/rest/).'
                        .format(r.status_code))
             raise PluvoException(msg)
 
