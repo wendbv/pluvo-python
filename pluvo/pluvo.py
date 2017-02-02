@@ -240,7 +240,7 @@ class Pluvo:
         params = {'user_id': user_id, 'course_id': course_id}
         if token_type == 'trainer':
             params['trainer_id'] = trainer_id
-        url = 'user/token/{}'.format(token_type)
+        url = 'user/token/{}/'.format(token_type)
         return self._request('GET', url, params=params)
 
     def get_user(self, user_id):

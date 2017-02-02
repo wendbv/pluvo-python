@@ -458,7 +458,7 @@ def test_pluvo_get_token(mocker):
     retval = p.get_token('student', 1, 2)
 
     assert retval == p._request.return_value
-    p._request.assert_called_once_with('GET', 'user/token/student',
+    p._request.assert_called_once_with('GET', 'user/token/student/',
                                        params={'user_id': 1, 'course_id': 2})
 
 
@@ -469,7 +469,7 @@ def test_pluvo_get_trainer_token(mocker):
     retval = p.get_token('trainer', 1, 2, 3)
 
     assert retval == p._request.return_value
-    p._request.assert_called_once_with('GET', 'user/token/trainer', params={
+    p._request.assert_called_once_with('GET', 'user/token/trainer/', params={
         'user_id': 1, 'course_id': 2, 'trainer_id': 3})
 
 
