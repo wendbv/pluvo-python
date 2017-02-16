@@ -522,12 +522,14 @@ def test_pluvo_get_progress_report(mocker):
     p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_get_multiple')
 
-    retval = p.get_progress_report([1, 2], [3, 4], ['-student_id'])
+    retval = p.get_progress_report([1, 2], [3, 4], ['-student_id'], 10, 0)
     assert retval == p._get_multiple.return_value
     p._get_multiple.assert_called_once_with('progress/reports/', params={
         'student_id': [1, 2],
         'course_id': [3, 4],
-        'order_by': ['-student_id']
+        'order_by': ['-student_id'],
+        'offset': 10,
+        'limit': 0,
     })
 
 

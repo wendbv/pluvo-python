@@ -265,11 +265,13 @@ class Pluvo:
             return self._request('POST', 'user/', user)
 
     def get_progress_report(self, student_ids=None, course_ids=None,
-                            order_by=None):
+                            order_by=None, offset=None, limit=None):
         params = {
             'student_id': student_ids,
             'course_id': course_ids,
-            'order_by': order_by
+            'order_by': order_by,
+            'offset': offset,
+            'limit': limit
         }
         return self._get_multiple('progress/reports/', params=params)
 
