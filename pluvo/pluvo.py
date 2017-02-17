@@ -1,5 +1,6 @@
 import itertools
 import requests
+import sys
 
 
 DEFAULT_API_URL = 'https://api.pluvo.co/rest/'
@@ -25,7 +26,7 @@ class PluvoMisconfigured(PluvoException):
     """Raised when the API is not correctly configured."""
 
 
-class PluvoResultSet:
+class PluvoResultSet(object):
     """Returned for list API calls
 
     This object can be indexed, sliced, and iterated over like a regular
