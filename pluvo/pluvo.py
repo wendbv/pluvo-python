@@ -1,6 +1,5 @@
 import itertools
 import requests
-import sys
 
 
 DEFAULT_API_URL = 'https://api.pluvo.co/rest/'
