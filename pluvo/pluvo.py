@@ -87,6 +87,8 @@ class PluvoResultSet(object):
                     result.extend(self._get_page(stop_key)[:stop_offset])
                 return result
         else:
+            if key >= len(self):
+                raise IndexError("PluvoResultSet index out of range")
             key, offset = self._get_page_key_offset(canonicalize(key))
             return self._get_page(key)[offset]
 

@@ -73,6 +73,8 @@ def test_pluvo_resultset_getitem(mocker):
         assert p[8:1] == []
         assert p[0:1] == [0]
         assert p[3:7] == [3, 4, 5, 6]
+        with pytest.raises(IndexError):
+            p[8]
 
 
 def test_pluvo_resultset_len(mocker):
