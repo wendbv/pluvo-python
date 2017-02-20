@@ -70,6 +70,7 @@ def test_pluvo_resultset_getitem(mocker):
         assert p[-1] == 7
         assert p[:1] == [0]
         assert p[-3:] == [5, 6, 7]
+        assert p[:-3] == [0, 1, 2, 3, 4]
         assert p[8:1] == []
         assert p[0:1] == [0]
         assert p[3:7] == [3, 4, 5, 6]
@@ -91,6 +92,7 @@ def test_pluvo_resultset_len(mocker):
 
     assert len(p) == 4
     assert len(p) == 4
+    # assert that even though len is called twice, we do not make 2 requests
     assert pluvo_mock._request.call_count == 1
 
 
