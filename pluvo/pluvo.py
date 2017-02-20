@@ -94,6 +94,14 @@ class PluvoResultSet(object):
 
     def __len__(self):
         if self._count is None:
+            # TODO
+            # there is an optimization opportunity here: sometimes
+            # when we call len() we already have some good guess which page
+            # we're going to need. If we access resultset[40], for example, the
+            # code does a bounds check which leads us to request the 0th page
+            # (which we'll definitely don't need). I don't expect this to occur
+            # frequently though. slices require no bound checks, and how often
+            # would you need a specific item from the middle of the set?
             self._get_page(0)
         return self._count
 
