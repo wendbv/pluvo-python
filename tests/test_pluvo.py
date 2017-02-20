@@ -1,8 +1,8 @@
-from mock import call
+from mock import call, patch
 import pytest
 
 import pluvo
-from pluvo import PluvoGenerator, DEFAULT_API_URL, DEFAULT_PAGE_SIZE
+from pluvo import PluvoResultSet, DEFAULT_API_URL, DEFAULT_PAGE_SIZE
 
 
 class Multiple:
@@ -17,112 +17,101 @@ class Multiple:
         return result
 
 
-def test_pluvo_generator_one_page(mocker):
+def test_pluvo_resultset_get_page(mocker):
     pages = [
-        {'count': 2, 'data': [1, 2]}
+        {'count': 4, 'data': [0, 1]},
+        {'count': 4, 'data': [2, 3]}
     ]
+    i = iter(pages)
 
-    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
+    request_mock = mocker.MagicMock(
+        side_effect=lambda *args, **kwargs: next(i))
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=request_mock)
 
-    retval = PluvoGenerator(pluvo_mock, 'endpoint')
+    p = PluvoResultSet(pluvo_mock, 'endpoint')
+    page0 = p._get_page(0)
+    # make sure that fetching twice doesn't generate a new request
+    page0_again = p._get_page(0)
+    page1 = p._get_page(1)
 
-    assert len(retval) == 2
-    assert list(retval) == [1, 2]
-    _request_mock.assert_has_calls([
-        call('GET', 'endpoint', params={'limit': 2, 'offset': 0})])
+    assert page0 == page0_again
+    assert page0 == pages[0]['data']
+    assert page1 == pages[1]['data']
 
-
-def test_pluvo_generator_two_pages(mocker):
-    pages = [
-        {'count': 4, 'data': [1, 2]},
-        {'count': 4, 'data': [3, 4]}
-    ]
-
-    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
-
-    retval = PluvoGenerator(pluvo_mock, 'endpoint')
-
-    assert len(retval) == 4
-    assert list(retval) == [1, 2, 3, 4]
-    _request_mock.assert_has_calls([
+    pluvo_mock._request.assert_has_calls([
         call('GET', 'endpoint', params={'limit': 2, 'offset': 0}),
-        call('GET', 'endpoint', params={'limit': 2, 'offset': 2})
+        call('GET', 'endpoint', params={'limit': 2, 'offset': 2}),
     ])
 
 
-def test_pluvo_generator_limit(mocker):
+def test_pluvo_resultset_get_page_key_offset(mocker):
+    pluvo_mock = mocker.MagicMock(page_size=2)
+    p = PluvoResultSet(pluvo_mock, 'endpoint')
+
+    assert p._get_page_key_offset(0) == (0, 0)
+    assert p._get_page_key_offset(1) == (0, 1)
+    assert p._get_page_key_offset(7) == (3, 1)
+
+
+def test_pluvo_resultset_getitem(mocker):
     pages = [
-        {'count': 4, 'data': [1, 2]},
-        {'count': 4, 'data': [3, 4]}
+        [0, 1],
+        [2, 3],
+        [4, 5],
+        [6, 7],
     ]
 
-    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
+    get_page_mock = mocker.MagicMock(side_effect=lambda x: pages[x])
+    pluvo_mock = mocker.MagicMock(page_size=2)
+    p = PluvoResultSet(pluvo_mock, 'endpoint')
+    p._count = 8
+    with patch.object(p, '_get_page', get_page_mock):
+        assert p[:] == [0, 1, 2, 3, 4, 5, 6, 7]
+        assert p[-1] == 7
+        assert p[:1] == [0]
+        assert p[-3:] == [5, 6, 7]
+        assert p[:-3] == [0, 1, 2, 3, 4]
+        assert p[8:1] == []
+        assert p[0:1] == [0]
+        assert p[3:7] == [3, 4, 5, 6]
+        with pytest.raises(IndexError):
+            p[8]
 
-    retval = PluvoGenerator(pluvo_mock, 'endpoint', params={'limit': 3})
 
-    assert len(retval) == 3
-    assert list(retval) == [1, 2, 3]
-    _request_mock.assert_has_calls([
-        call('GET', 'endpoint', params={'limit': 2, 'offset': 0}),
-        call('GET', 'endpoint', params={'limit': 1, 'offset': 2})
-    ])
-
-
-def test_pluvo_generator_offset(mocker):
+def test_pluvo_resultset_len(mocker):
     pages = [
-        {'count': 4, 'data': [3, 4]}
+        {'count': 4, 'data': [0, 1]},
+        {'count': 4, 'data': [2, 3]}
+    ]
+    i = iter(pages)
+
+    request_mocker = mocker.MagicMock(
+        side_effect=lambda *args, **kwargs: next(i))
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=request_mocker)
+    p = PluvoResultSet(pluvo_mock, 'endpoint')
+
+    assert len(p) == 4
+    assert len(p) == 4
+    # assert that even though len is called twice, we do not make 2 requests
+    assert pluvo_mock._request.call_count == 1
+
+
+def test_pluvo_resultset_iter(mocker):
+    pages = [
+        [1, 2],
+        [3, 4],
+        [5, 6],
     ]
 
-    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
-
-    retval = PluvoGenerator(pluvo_mock, 'endpoint', params={'offset': 2})
-
-    assert len(retval) == 2
-    assert list(retval) == [3, 4]
-    _request_mock.assert_has_calls([
-        call('GET', 'endpoint', params={'limit': 2, 'offset': 2})
-    ])
-
-
-def test_pluvo_generator_limit_and_offset(mocker):
-    pages = [
-        {'count': 1, 'data': [3]}
-    ]
-
-    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
-
-    retval = PluvoGenerator(pluvo_mock, 'endpoint',
-                            params={'limit': 1, 'offset': 2})
-
-    assert len(retval) == 1
-    assert list(retval) == [3]
-    _request_mock.assert_has_calls([
-        call('GET', 'endpoint', params={'limit': 1, 'offset': 2})
-    ])
-
-
-def test_pluvo_generator_retrieving_less_items(mocker):
-    pages = [
-        {'count': 3, 'data': [1, 2]},
-        {'count': 3, 'data': []}
-    ]
-
-    _request_mock = mocker.MagicMock(side_effect=Multiple(pages).results)
-    pluvo_mock = mocker.MagicMock(page_size=2, _request=_request_mock)
-
-    retval = PluvoGenerator(pluvo_mock, 'endpoint')
-
-    assert len(retval) == 3
-    assert list(retval) == [1, 2]
-    _request_mock.assert_has_calls([
-        call('GET', 'endpoint', params={'limit': 2, 'offset': 0}),
-        call('GET', 'endpoint', params={'limit': 1, 'offset': 2})
-    ])
+    get_page_mock = mocker.MagicMock(side_effect=lambda x: pages[x])
+    pluvo_mock = mocker.MagicMock(page_size=2)
+    p = PluvoResultSet(pluvo_mock, 'endpoint')
+    p._count = 6
+    with patch.object(p, '_get_page', get_page_mock):
+        assert list(iter(p)) == [1, 2, 3, 4, 5, 6]
+        get_page_mock.assert_has_calls([
+            call(0), call(1), call(2)
+        ])
 
 
 def test_pluvo_init_client_credentials():
@@ -298,7 +287,7 @@ def test_pluvo_request_error_no_error_data(mocker):
 
 def test_pluvo_get_multiple(mocker):
     p = pluvo.Pluvo(token='token')
-    pluvo_generator_mock = mocker.patch('pluvo.pluvo.PluvoGenerator')
+    pluvo_generator_mock = mocker.patch('pluvo.pluvo.PluvoResultSet')
 
     p._get_multiple('endpoint', params='params')
 

@@ -1,4 +1,4 @@
-import copy
+import itertools
 import requests
 
 
@@ -25,73 +25,90 @@ class PluvoMisconfigured(PluvoException):
     """Raised when the API is not correctly configured."""
 
 
-class PluvoGenerator:
+class PluvoResultSet(object):
     """Returned for list API calls
 
-    Immediately gets the first page of a list API call. The length is set
-    using the `count` result from the call, so is not nessecary to get
-    all items to know the total count.
+    This object can be indexed, sliced, and iterated over like a regular
+    sequence. Result pages will be fetched as needed from Pluvo.
 
     Page size can be set when instantiating the `Pluvo` object using
     `page_size`, otherwise the `DEFAULT_PAGE_SIZE` is used.
-
-    Items are yielded using a generator. When the items from the first page
-    request are all yielded, the next page is retrieved."""
+    """
 
     def __init__(self, pluvo, endpoint, params=None):
         self.pluvo = pluvo
         self.endpoint = endpoint
         self.params = params if params is not None else {}
-        self.initial_limit = self.params.get('limit')
-        self.initial_offset = self.params.get('offset')
-        self.length = 0
 
-        result = self._get_next_page()
+        self._count = None
+        self.pages = {}
 
-        self.items = result['data']
+    def _get_page(self, index):
+        if index not in self.pages:
+            params = dict(self.params, offset=index * self.pluvo.page_size,
+                          limit=self.pluvo.page_size)
+            resp = self.pluvo._request('GET', self.endpoint, params=params)
+            self.pages[index] = resp['data']
+            if self._count is None:
+                self._count = resp['count']
+        return self.pages[index]
 
-    def _get_next_page(self, initial=True):
-        if initial and (self.initial_limit is None
-                        or self.initial_limit > self.pluvo.page_size):
-            self.params['limit'] = self.pluvo.page_size
-        if initial and self.initial_offset is None:
-            self.params['offset'] = 0
+    def _get_page_key_offset(self, key):
+        """transform a key into a page key and offset in to the page"""
+        return key // self.pluvo.page_size, key % self.pluvo.page_size
 
-        if self.params['limit'] <= 0:
-            return {'data': []}
+    def __getitem__(self, key):
+        def canonicalize(key):
+            """transform negative keys to regular ones"""
+            if key < 0:
+                key = len(self) + key
+            return key
 
-        params = copy.copy(self.params)
-        result = self.pluvo._request('GET', self.endpoint, params=params)
-        if not self.length:
-            if self.initial_limit is None \
-                    or self.initial_limit > result['count']:
-                self.length = result['count']
-                if self.initial_offset is not None:
-                    self.length -= self.initial_offset
+        if isinstance(key, slice):
+            start = canonicalize(
+                key.start if key.start is not None else 0)
+            stop = canonicalize(
+                key.stop if key.stop is not None else len(self))
+
+            if start > stop:
+                return []
+
+            start_key, start_offset = self._get_page_key_offset(start)
+            stop_key, stop_offset = self._get_page_key_offset(stop)
+
+            if start_key == stop_key:
+                # slice is contained within a single page
+                return self._get_page(start_key)[start_offset:stop_offset]
             else:
-                self.length = self.initial_limit
-
-        next_page_size = min(
-            self.params['limit'],
-            (self.length - self.params['offset'] - self.params['limit']))
-        self.params['offset'] += self.params['limit']
-        self.params['limit'] = next_page_size
-        return result
+                result = self._get_page(start_key)[start_offset:]
+                for k in range(start_key + 1, stop_key):
+                    result.extend(self._get_page(k))
+                if stop_offset > 0:
+                    result.extend(self._get_page(stop_key)[:stop_offset])
+                return result
+        else:
+            if key >= len(self):
+                raise IndexError("PluvoResultSet index out of range")
+            key, offset = self._get_page_key_offset(canonicalize(key))
+            return self._get_page(key)[offset]
 
     def __len__(self):
-        return self.length
+        if self._count is None:
+            # TODO
+            # there is an optimization opportunity here: sometimes
+            # when we call len() we already have some good guess which page
+            # we're going to need. If we access resultset[40], for example, the
+            # code does a bounds check which leads us to request the 0th page
+            # (which we'll definitely don't need). I don't expect this to occur
+            # frequently though. slices require no bound checks, and how often
+            # would you need a specific item from the middle of the set?
+            self._get_page(0)
+        return self._count
 
     def __iter__(self):
-        i = 0
-        while True:
-            for item in self.items:
-                yield item
-                i += 1
-                if i >= self.length:
-                    return
-            self.items = self._get_next_page(initial=False)['data']
-            if not self.items:
-                return
+        return itertools.chain(*(
+            iter(self._get_page(key))
+            for key in range(0, len(self) // self.pluvo.page_size)))
 
 
 class Pluvo:
@@ -186,7 +203,7 @@ class Pluvo:
         return data
 
     def _get_multiple(self, endpoint, params=None):
-        return PluvoGenerator(pluvo=self, endpoint=endpoint, params=params)
+        return PluvoResultSet(pluvo=self, endpoint=endpoint, params=params)
 
     def get_course(self, course_id):
         return self._request('GET', 'course/{}/'.format(course_id))
