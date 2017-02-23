@@ -44,6 +44,26 @@ def test_pluvo_resultset_get_page(mocker):
     ])
 
 
+def test_pluvo_resultset_post_page(mocker):
+    pages = [
+        {'count': 4, 'data': [0, 1]},
+        {'count': 4, 'data': [2, 3]}
+    ]
+    i = iter(pages)
+
+    request_mock = mocker.MagicMock(
+        side_effect=lambda *args, **kwargs: next(i))
+    pluvo_mock = mocker.MagicMock(page_size=2, _request=request_mock)
+
+    p = PluvoResultSet(pluvo_mock, 'endpoint', method='POST')
+    page0 = p._get_page(0)
+    assert page0 == [0, 1]
+
+    pluvo_mock._request_assert_has_calls([
+        call('POST', 'endpoint', data={'limit': 2, 'offset': 0})
+    ])
+
+
 def test_pluvo_resultset_get_page_key_offset(mocker):
     pluvo_mock = mocker.MagicMock(page_size=2)
     p = PluvoResultSet(pluvo_mock, 'endpoint')
@@ -290,10 +310,10 @@ def test_pluvo_get_multiple(mocker):
     p = pluvo.Pluvo(token='token')
     pluvo_generator_mock = mocker.patch('pluvo.pluvo.PluvoResultSet')
 
-    p._get_multiple('endpoint', params='params')
+    p._get_multiple('endpoint', params='params', method='POST')
 
     pluvo_generator_mock.assert_called_once_with(
-        pluvo=p, endpoint='endpoint', params='params')
+        pluvo=p, endpoint='endpoint', params='params', method='POST')
 
 
 def test_pluvo_put(mocker):
@@ -520,7 +540,7 @@ def test_pluvo_get_progress_report(mocker):
         'order_by': ['-student_id'],
         'offset': 10,
         'limit': 0,
-    })
+    }, method='POST')
 
 
 def test_pluvo_archive_student_course_version(mocker):
