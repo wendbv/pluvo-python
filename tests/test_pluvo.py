@@ -101,16 +101,17 @@ def test_pluvo_resultset_iter(mocker):
         [1, 2],
         [3, 4],
         [5, 6],
+        [7],
     ]
 
     get_page_mock = mocker.MagicMock(side_effect=lambda x: pages[x])
     pluvo_mock = mocker.MagicMock(page_size=2)
     p = PluvoResultSet(pluvo_mock, 'endpoint')
-    p._count = 6
+    p._count = 7
     with patch.object(p, '_get_page', get_page_mock):
-        assert list(iter(p)) == [1, 2, 3, 4, 5, 6]
+        assert list(iter(p)) == [1, 2, 3, 4, 5, 6, 7]
         get_page_mock.assert_has_calls([
-            call(0), call(1), call(2)
+            call(0), call(1), call(2), call(3)
         ])
 
 

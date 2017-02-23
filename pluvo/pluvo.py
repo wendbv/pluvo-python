@@ -1,5 +1,6 @@
 import itertools
 import requests
+import math
 
 
 DEFAULT_API_URL = 'https://api.pluvo.co/rest/'
@@ -106,9 +107,9 @@ class PluvoResultSet(object):
         return self._count
 
     def __iter__(self):
-        return itertools.chain(*(
-            iter(self._get_page(key))
-            for key in range(0, len(self) // self.pluvo.page_size)))
+        num_pages = int(math.ceil(len(self) / float(self.pluvo.page_size)))
+        page_iters = (iter(self._get_page(key)) for key in range(0, num_pages))
+        return itertools.chain(*page_iters)
 
 
 class Pluvo:
