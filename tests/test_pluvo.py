@@ -309,10 +309,10 @@ def test_pluvo_get_multiple(mocker):
     p = pluvo.Pluvo(token='token')
     pluvo_generator_mock = mocker.patch('pluvo.pluvo.PluvoResultSet')
 
-    p._get_multiple('endpoint', params='params')
+    p._get_multiple('endpoint', params='params', method='POST')
 
     pluvo_generator_mock.assert_called_once_with(
-        pluvo=p, endpoint='endpoint', params='params')
+        pluvo=p, endpoint='endpoint', params='params', method='POST')
 
 
 def test_pluvo_put(mocker):

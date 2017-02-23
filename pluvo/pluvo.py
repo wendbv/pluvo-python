@@ -206,8 +206,9 @@ class Pluvo:
                 raise PluvoException(msg)
         return data
 
-    def _get_multiple(self, endpoint, params=None):
-        return PluvoResultSet(pluvo=self, endpoint=endpoint, params=params)
+    def _get_multiple(self, endpoint, params=None, method='GET'):
+        return PluvoResultSet(
+            pluvo=self, endpoint=endpoint, params=params, method=method)
 
     def get_course(self, course_id):
         return self._request('GET', 'course/{}/'.format(course_id))
