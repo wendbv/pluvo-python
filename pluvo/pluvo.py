@@ -35,8 +35,9 @@ class PluvoResultSet(object):
     `page_size`, otherwise the `DEFAULT_PAGE_SIZE` is used.
     """
 
-    def __init__(self, pluvo, endpoint, params=None):
+    def __init__(self, pluvo, endpoint, params=None, method='GET'):
         self.pluvo = pluvo
+        self.method = method
         self.endpoint = endpoint
         self.params = params if params is not None else {}
 
@@ -47,7 +48,10 @@ class PluvoResultSet(object):
         if index not in self.pages:
             params = dict(self.params, offset=index * self.pluvo.page_size,
                           limit=self.pluvo.page_size)
-            resp = self.pluvo._request('GET', self.endpoint, params=params)
+            if self.method == 'POST':
+                resp = self.pluvo._request('POST', self.endpoint, data=params)
+            else:
+                resp = self.pluvo._request('GET', self.endpoint, params=params)
             self.pages[index] = resp['data']
             if self._count is None:
                 self._count = resp['count']
@@ -290,7 +294,8 @@ class Pluvo:
             'offset': offset,
             'limit': limit
         }
-        return self._get_multiple('progress/reports/', params=params)
+        return self._get_multiple(
+            'progress/reports/', params=params, method='POST')
 
     def get_version(self):
         """Get the Pluvo API version."""
