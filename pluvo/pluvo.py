@@ -217,14 +217,16 @@ class Pluvo:
     def get_courses(self, offset=None, limit=None, title=None,
                     description=None, published_from=None, published_to=None,
                     student_id=None, creator_id=None, creation_date_from=None,
-                    creation_date_to=None, order_by=None, id_list=None):
+                    creation_date_to=None, order_by=None, id_list=None,
+                    include_version_numbers=False):
         params = {
             'offset': offset, 'limit': limit, 'title': title,
             'description': description, 'published_from': published_from,
             'published_to': published_to, 'student_id': student_id,
             'creator_id': creator_id, 'creation_date_from': creation_date_from,
             'creation_date_to': creation_date_to, 'order_by': order_by,
-            'id': id_list
+            'id': id_list,
+            'include_version_numbers': str(include_version_numbers)
         }
         return self._get_multiple('course/', params=params)
 
