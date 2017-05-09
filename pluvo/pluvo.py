@@ -225,8 +225,7 @@ class Pluvo:
             'published_to': published_to, 'student_id': student_id,
             'creator_id': creator_id, 'creation_date_from': creation_date_from,
             'creation_date_to': creation_date_to, 'order_by': order_by,
-            'id': id_list,
-            'include_version_numbers': str(include_version_numbers)
+            'id': id_list, 'include_version_numbers': include_version_numbers
         }
         return self._get_multiple('course/', params=params)
 
