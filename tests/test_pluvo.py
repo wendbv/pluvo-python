@@ -425,7 +425,8 @@ def test_pluvo_get_courses(mocker):
             'creator_id': 8, 'creation_date_from': 9,
             'creation_date_to': 10,
             'order_by': 11,
-            'id': 12
+            'id': 12,
+            'include_version_numbers': False,
         })
 
 
