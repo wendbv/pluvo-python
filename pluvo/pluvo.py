@@ -214,6 +214,9 @@ class Pluvo:
     def get_course(self, course_id):
         return self._request('GET', 'course/{}/'.format(course_id))
 
+    def get_lti_info(self, course_id):
+        return self._request('GET', 'course/{}/lti'.format(course_id))
+
     def get_courses(self, offset=None, limit=None, title=None,
                     description=None, published_from=None, published_to=None,
                     student_id=None, creator_id=None, creation_date_from=None,
