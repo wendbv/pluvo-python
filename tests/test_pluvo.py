@@ -550,7 +550,7 @@ def test_pluvo_get_progress_report(mocker):
         'order_by': ['-student_id'],
         'offset': 10,
         'limit': 0,
-    }, method='POST')
+    }, method='GET')
 
 
 def test_pluvo_archive_student_course_version(mocker):
