@@ -301,7 +301,7 @@ class Pluvo:
             'limit': limit
         }
         return self._get_multiple(
-            'progress/reports/', params=params, method='POST')
+            'progress/reports/', params=params, method='GET')
 
     def get_version(self):
         """Get the Pluvo API version."""
