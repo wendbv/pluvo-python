@@ -303,6 +303,10 @@ class Pluvo:
         return self._get_multiple(
             'progress/reports/', params=params, method='GET')
 
+    def get_course_report(self, course_id, student_id):
+        url = 'report/course/{}/user/{}/'.format(course_id, student_id)
+        return self._request('GET', url)
+
     def get_version(self):
         """Get the Pluvo API version."""
         return self._request('GET', 'version/')

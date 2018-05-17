@@ -563,6 +563,16 @@ def test_pluvo_archive_student_course_version(mocker):
         'PUT', 'course/1/user/2/', {'action': 'archive'})
 
 
+def test_pluvo_get_course_report(mocker):
+    p = pluvo.Pluvo(token='token')
+    mocker.patch.object(p, '_request')
+
+    retval = p.get_course_report(1, 2)
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with(
+        'GET', 'report/course/1/user/2/')
+
+
 def test_pluvo_get_version(mocker):
     p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
