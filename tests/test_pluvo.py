@@ -390,6 +390,16 @@ def test_pluvo_set_course_put(mocker):
     p._request.assert_called_once_with('PUT', 'course/1/', {'id': 1})
 
 
+def test_delete_course(mocker):
+    p = pluvo.Pluvo(token='token')
+    mocker.patch.object(p, '_request')
+
+    retval = p.delete_course(1)
+
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with('DELETE', 'course/1/')
+
+
 def test_pluvo_set_course_post(mocker):
     p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
