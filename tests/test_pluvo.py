@@ -580,7 +580,18 @@ def test_pluvo_get_course_report(mocker):
     retval = p.get_course_report(1, 2)
     assert retval == p._request.return_value
     p._request.assert_called_once_with(
-        'GET', 'report/course/1/user/2/')
+        'GET', 'report/course/1/user/2/', params={})
+
+
+def test_pluvo_get_course_report_filename(mocker):
+    p = pluvo.Pluvo(token='token')
+    mocker.patch.object(p, '_request')
+
+    filename = 'test.pdf'
+    retval = p.get_course_report(1, 2, filename)
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with(
+        'GET', 'report/course/1/user/2/', params={'filename': filename})
 
 
 def test_pluvo_get_version(mocker):
