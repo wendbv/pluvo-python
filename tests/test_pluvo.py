@@ -565,8 +565,8 @@ def test_pluvo_get_progress_report(mocker):
         'order_by': ['-student_id'],
         'offset': 10,
         'limit': 0,
-        'completion_date_from': dt1,
-        'completion_date_to': dt2
+        'completion_date_from': dt1.isoformat(),
+        'completion_date_to': dt2.isoformat()
     }, method='GET')
 
 

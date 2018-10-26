@@ -295,6 +295,13 @@ class Pluvo:
                             order_by=None, offset=None, limit=None,
                             completion_date_from=None,
                             completion_date_to=None):
+
+        if completion_date_from is not None:
+            completion_date_from = completion_date_from.isoformat()
+
+        if completion_date_to is not None:
+            completion_date_to = completion_date_to.isoformat()
+
         params = {
             'student_id': student_ids,
             'course_id': course_ids,
