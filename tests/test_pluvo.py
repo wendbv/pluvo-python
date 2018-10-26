@@ -3,6 +3,7 @@ import pytest
 
 import pluvo
 from pluvo import PluvoResultSet, DEFAULT_API_URL, DEFAULT_PAGE_SIZE
+import datetime
 
 
 class Multiple:
@@ -552,8 +553,11 @@ def test_pluvo_get_progress_report(mocker):
     p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_get_multiple')
 
+    dt1 = datetime.datetime(1900, 1, 2, 3, 4, 5, 6)
+    dt2 = datetime.datetime(1901, 2, 3, 4, 5, 6, 7)
+
     retval = p.get_progress_report(
-        [1, 2], [3, 4], ['-student_id'], 10, 0, 5, 6)
+        [1, 2], [3, 4], ['-student_id'], 10, 0, dt1, dt2)
     assert retval == p._get_multiple.return_value
     p._get_multiple.assert_called_once_with('progress/reports/', params={
         'student_id': [1, 2],
@@ -561,8 +565,8 @@ def test_pluvo_get_progress_report(mocker):
         'order_by': ['-student_id'],
         'offset': 10,
         'limit': 0,
-        'completion_date_from': 5,
-        'completion_date_to': 6
+        'completion_date_from': dt1,
+        'completion_date_to': dt2
     }, method='GET')
 
 
