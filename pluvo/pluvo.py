@@ -292,13 +292,24 @@ class Pluvo:
             return self._request('POST', 'user/', user)
 
     def get_progress_report(self, student_ids=None, course_ids=None,
-                            order_by=None, offset=None, limit=None):
+                            order_by=None, offset=None, limit=None,
+                            completion_date_from=None,
+                            completion_date_to=None):
+
+        if completion_date_from is not None:
+            completion_date_from = completion_date_from.isoformat()
+
+        if completion_date_to is not None:
+            completion_date_to = completion_date_to.isoformat()
+
         params = {
             'student_id': student_ids,
             'course_id': course_ids,
             'order_by': order_by,
             'offset': offset,
-            'limit': limit
+            'limit': limit,
+            'completion_date_from': completion_date_from,
+            'completion_date_to': completion_date_to
         }
         return self._get_multiple(
             'progress/reports/', params=params, method='GET')
