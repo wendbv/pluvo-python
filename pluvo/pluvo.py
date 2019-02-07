@@ -214,6 +214,11 @@ class Pluvo:
     def get_course(self, course_id):
         return self._request('GET', 'course/{}/'.format(course_id))
 
+    def copy_course(self, course_id, creator_id):
+        return self._request(
+            'POST', 'course/{}/copy/'.format(course_id),
+            data={'creator_id': creator_id})
+
     def get_lti_info(self, course_id):
         return self._request('GET', 'course/{}/lti'.format(course_id))
 

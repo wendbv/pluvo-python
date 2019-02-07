@@ -421,6 +421,17 @@ def test_pluvo_get_course(mocker):
     p._request.assert_called_once_with('GET', 'course/1/')
 
 
+def test_pluvo_copy_course(mocker):
+    p = pluvo.Pluvo(token='token')
+    mocker.patch.object(p, '_request')
+
+    retval = p.copy_course(1, 2)
+
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with(
+        'POST', 'course/1/copy/', data={'creator_id': 2})
+
+
 def test_pluvo_get_lti_info(mocker):
     p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
