@@ -231,6 +231,7 @@ def test_pluvo_get_with_client_credentials(mocker):
     p = pluvo.Pluvo(client_id='client_id', client_secret='client_secret')
     requests_mock = mocker.patch(
         'requests.request', return_value=mocker.MagicMock(status_code=200))
+    p.session.request = requests_mock
 
     retval = p._request('GET', 'url')
 
@@ -244,6 +245,7 @@ def test_pluvo_get_with_token(mocker):
     p = pluvo.Pluvo(token='token')
     requests_mock = mocker.patch(
         'requests.request', return_value=mocker.MagicMock(status_code=200))
+    p.session.request = requests_mock
 
     retval = p._request('GET', 'url')
 
@@ -257,6 +259,7 @@ def test_pluvo_get_with_params_and_token(mocker):
     p = pluvo.Pluvo(token='token')
     requests_mock = mocker.patch(
         'requests.request', return_value=mocker.MagicMock(status_code=200))
+    p.session.request = requests_mock
 
     retval = p._request('GET', 'url', params={'param': 1})
 
@@ -268,9 +271,11 @@ def test_pluvo_get_with_params_and_token(mocker):
 
 def test_pluvo_get_request_error(mocker):
     p = pluvo.Pluvo(token='token')
-    mocker.patch('requests.request', return_value=mocker.MagicMock(
-        status_code=400, json=mocker.MagicMock(
-            return_value={'error': 'error message'})))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(
+            status_code=400, json=mocker.MagicMock(
+                return_value={'error': 'error message'})))
+    p.session.request = requests_mock
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
         p._request('GET', 'url')
@@ -282,8 +287,10 @@ def test_pluvo_get_request_error(mocker):
 
 def test_pluvo_request_500_error(mocker):
     p = pluvo.Pluvo(token='token')
-    mocker.patch('requests.request', return_value=mocker.MagicMock(
-        status_code=500, json=mocker.MagicMock(side_effect=ValueError())))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(
+            status_code=500, json=mocker.MagicMock(side_effect=ValueError())))
+    p.session.request = requests_mock
 
     with pytest.raises(pluvo.PluvoException):
         p._request('GET', 'url')
@@ -291,8 +298,10 @@ def test_pluvo_request_500_error(mocker):
 
 def test_pluvo_request_no_json_response(mocker):
     p = pluvo.Pluvo(token='token')
-    mocker.patch('requests.request', return_value=mocker.MagicMock(
-        status_code=200, json=mocker.MagicMock(side_effect=ValueError())))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(
+            status_code=200, json=mocker.MagicMock(side_effect=ValueError())))
+    p.session.request = requests_mock
 
     with pytest.raises(pluvo.PluvoException):
         p._request('GET', 'url')
@@ -300,8 +309,10 @@ def test_pluvo_request_no_json_response(mocker):
 
 def test_pluvo_request_error_no_error_data(mocker):
     p = pluvo.Pluvo(token='token')
-    mocker.patch('requests.request', return_value=mocker.MagicMock(
-        status_code=404, json=mocker.MagicMock(return_value={''})))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(
+            status_code=404, json=mocker.MagicMock(return_value={''})))
+    p.session.request = requests_mock
 
     with pytest.raises(pluvo.PluvoException):
         p._request('GET', 'url')
@@ -323,6 +334,7 @@ def test_pluvo_put(mocker):
     mocker.patch.object(p, '_set_auth_headers')
     requests_mock = mocker.patch(
         'requests.request', return_value=mocker.MagicMock(status_code=200))
+    p.session.request = requests_mock
 
     retval = p._request('PUT', 'endpoint', {'test': 1}, params='params')
 
@@ -337,9 +349,11 @@ def test_pluvo_put(mocker):
 
 def test_pluvo_put_request_error(mocker):
     p = pluvo.Pluvo(token='token')
-    mocker.patch('requests.request', return_value=mocker.MagicMock(
-        status_code=400, json=mocker.MagicMock(
-            return_value={'error': 'error message'})))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(
+            status_code=400, json=mocker.MagicMock(
+                return_value={'error': 'error message'})))
+    p.session.request = requests_mock
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
         p._request('PUT', 'url', 'data')
@@ -355,6 +369,7 @@ def test_pluvo_post(mocker):
     mocker.patch.object(p, '_set_auth_headers')
     requests_mock = mocker.patch(
         'requests.request', return_value=mocker.MagicMock(status_code=200))
+    p.session.request = requests_mock
 
     retval = p._request('POST', 'endpoint', {'test': 1}, params='params')
 
@@ -369,9 +384,11 @@ def test_pluvo_post(mocker):
 
 def test_pluvo_post_request_error(mocker):
     p = pluvo.Pluvo(token='token')
-    mocker.patch('requests.request', return_value=mocker.MagicMock(
-        status_code=400, json=mocker.MagicMock(
-            return_value={'error': 'error message'})))
+    requests_mock = mocker.patch(
+        'requests.request', return_value=mocker.MagicMock(
+            status_code=400, json=mocker.MagicMock(
+                return_value={'error': 'error message'})))
+    p.session.request = requests_mock
 
     with pytest.raises(pluvo.PluvoAPIException) as exc_info:
         p._request('POST', 'url', 'data')
