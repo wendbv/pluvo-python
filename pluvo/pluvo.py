@@ -2,6 +2,9 @@ import itertools
 import requests
 import math
 
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 
 DEFAULT_API_URL = 'https://api.pluvo.co/rest/'
 DEFAULT_PAGE_SIZE = 20
@@ -143,6 +146,11 @@ class Pluvo:
         self.client_id = client_id
         self.client_secret = client_secret
         self.token = token
+        self.session = requests.Session()
+
+        retry = Retry(10, backoff_factor=0.02)
+        self.session.mount('http://', HTTPAdapter(max_retries=retry))
+        self.session.mount('https://', HTTPAdapter(max_retries=retry))
 
         if api_url is not None:
             self.api_url = api_url
@@ -178,7 +186,7 @@ class Pluvo:
         params = self._set_auth_params(params)
         url = self.api_url + endpoint
 
-        r = requests.request(
+        r = self.session.request(
             method, url, params=params, json=data, headers=headers)
         try:
             data = r.json()
