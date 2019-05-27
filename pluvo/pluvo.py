@@ -322,7 +322,7 @@ class Pluvo:
             'offset': offset,
             'limit': limit,
             'completion_date_from': completion_date_from,
-            'completion_date_to': completion_date_to
+            'completion_date_to': completion_date_to,
         }
         return self._get_multiple(
             'progress/reports/', params=params, method='GET')
