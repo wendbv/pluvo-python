@@ -322,10 +322,22 @@ class Pluvo:
             'offset': offset,
             'limit': limit,
             'completion_date_from': completion_date_from,
-            'completion_date_to': completion_date_to
+            'completion_date_to': completion_date_to,
         }
         return self._get_multiple(
             'progress/reports/', params=params, method='GET')
+
+    def get_progress_sessions(self, student_id=None, course_id=None,
+                              limit=None, offset=0):
+        params = {
+            'student_id': student_id,
+            'course_id': course_id,
+            'limit': limit,
+            'offset': offset
+        }
+
+        return self._get_multiple(
+            'progress/reports/sessions/', params=params, method='GET')
 
     def get_course_report(self, course_id, student_id, filename=None):
         params = {'filename': filename} if filename else {}
