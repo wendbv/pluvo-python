@@ -585,7 +585,7 @@ def test_pluvo_get_progress_report(mocker):
     dt2 = datetime.datetime(1901, 2, 3, 4, 5, 6, 7)
 
     retval = p.get_progress_report(
-        [1, 2], [3, 4], ['-student_id'], 10, 0, dt1, dt2)
+        [1, 2], [3, 4], ['-student_id'], 10, 0, dt1, dt2, True)
     assert retval == p._get_multiple.return_value
     p._get_multiple.assert_called_once_with('progress/reports/', params={
         'student_id': [1, 2],
@@ -594,7 +594,8 @@ def test_pluvo_get_progress_report(mocker):
         'offset': 10,
         'limit': 0,
         'completion_date_from': dt1.isoformat(),
-        'completion_date_to': dt2.isoformat()
+        'completion_date_to': dt2.isoformat(),
+        'include_answers': True
     }, method='GET')
 
 

@@ -219,8 +219,11 @@ class Pluvo:
         return PluvoResultSet(
             pluvo=self, endpoint=endpoint, params=params, method=method)
 
-    def get_course(self, course_id):
-        return self._request('GET', 'course/{}/'.format(course_id))
+    def get_course(self, course_id, version_number=None):
+        if version_number is None:
+            return self._request('GET', 'course/{}/'.format(course_id))
+        return self._request('GET', 'course/{}/{}/'.format(
+            course_id, version_number))
 
     def copy_course(self, course_id, creator_id):
         return self._request(
@@ -307,7 +310,7 @@ class Pluvo:
     def get_progress_report(self, student_ids=None, course_ids=None,
                             order_by=None, offset=None, limit=None,
                             completion_date_from=None,
-                            completion_date_to=None):
+                            completion_date_to=None, include_answers=False):
 
         if completion_date_from is not None:
             completion_date_from = completion_date_from.isoformat()
@@ -323,6 +326,7 @@ class Pluvo:
             'limit': limit,
             'completion_date_from': completion_date_from,
             'completion_date_to': completion_date_to,
+            'include_answers': include_answers
         }
         return self._get_multiple(
             'progress/reports/', params=params, method='GET')
