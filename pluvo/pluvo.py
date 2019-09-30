@@ -230,8 +230,11 @@ class Pluvo:
             'POST', 'course/{}/copy/'.format(course_id),
             data={'creator_id': creator_id})
 
-    def get_lti_info(self, course_id):
-        return self._request('GET', 'course/{}/lti'.format(course_id))
+    def get_lti_info(self, course_id=None):
+        if course_id is None:
+            return self._request('GET', 'course/all/lti')
+        else:
+            return self._request('GET', 'course/{}/lti'.format(course_id))
 
     def get_courses(self, offset=None, limit=None, title=None,
                     description=None, published_from=None, published_to=None,
