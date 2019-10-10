@@ -331,7 +331,7 @@ class Pluvo:
             'include_answers': include_answers
         }
         return self._get_multiple(
-            'progress/reports/', params=params, method='GET')
+            'progress/reports/', params=params, method='POST')
 
     def get_progress_sessions(self, student_id=None, course_id=None,
                               limit=None, offset=0):
