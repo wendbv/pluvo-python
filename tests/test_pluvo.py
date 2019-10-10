@@ -596,7 +596,7 @@ def test_pluvo_get_progress_report(mocker):
         'completion_date_from': dt1.isoformat(),
         'completion_date_to': dt2.isoformat(),
         'include_answers': True
-    }, method='GET')
+    }, method='POST')
 
 
 def test_pluvo_archive_student_course_version(mocker):
