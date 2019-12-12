@@ -321,8 +321,8 @@ class Pluvo:
             completion_date_to = completion_date_to.isoformat()
 
         params = {
-            'student_id': student_ids,
-            'course_id': course_ids,
+            'student_ids': student_ids,
+            'course_ids': course_ids,
             'order_by': order_by,
             'offset': offset,
             'limit': limit,
