@@ -248,7 +248,7 @@ class Pluvo:
             'creation_date_to': creation_date_to, 'order_by': order_by,
             'id': id_list, 'include_version_numbers': include_version_numbers
         }
-        return self._get_multiple('course/', params=params)
+        return self._get_multiple('course/', params=params, method='POST')
 
     def set_course(self, course):
         if 'id' in course:
