@@ -455,7 +455,7 @@ def test_pluvo_get_lti_info(mocker):
 
     retval = p.get_lti_info(1)
     assert retval == p._request.return_value
-    p._request.assert_called_once_with('GET', 'course/1/lti')
+    p._request.assert_called_once_with('GET', 'course/1/lti/')
 
 
 def test_pluvo_get_courses(mocker):
@@ -475,7 +475,7 @@ def test_pluvo_get_courses(mocker):
             'order_by': 11,
             'id': 12,
             'include_version_numbers': False,
-        })
+        }, method='POST')
 
 
 def test_pluvo_set_organisation_put(mocker):
