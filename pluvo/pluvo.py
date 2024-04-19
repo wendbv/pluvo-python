@@ -272,6 +272,12 @@ class Pluvo:
         else:
             return self._request('POST', 'organisation/', organisation)
 
+    def delete_organisation(self, org_id, permanent=False):
+        if permanent:
+            return self._request('DELETE', 'organisation/{}/permanent/'.format(org_id))
+        else:
+            return self._request('DELETE', 'organisation/{}/'.format(org_id))
+
     def get_s3_upload_token(self, filename, media_type):
         return self._request(
             'GET',
