@@ -21,6 +21,9 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     install_requires=['requests'],
+    extras_require={
+        'websocket': ['websockets'],
+    },
     tests_require=['coverage', 'flake8==2.6.2', 'pytest>=2.7', 'pytest-cov',
                    'pytest-flake8==0.2', 'pytest-mock']
 )

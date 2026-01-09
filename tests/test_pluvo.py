@@ -638,3 +638,113 @@ def test_pluvo_get_version(mocker):
 
     assert retval == p._request.return_value
     p._request.assert_called_once_with('GET', 'version/')
+
+
+def test_pluvo_course_websocket_client(mocker):
+    p = pluvo.Pluvo(token='token', api_url='https://api.pluvo.co/rest/')
+    mocker.patch.object(p, 'get_token', return_value={'token': 'ws_token'})
+
+    client = p.course_websocket_client(123, 456)
+
+    p.get_token.assert_called_once_with('manager', 456, 123)
+    assert client.ws_url == 'wss://api.pluvo.co/ws/course/'
+    assert client.token == 'ws_token'
+
+
+def test_pluvo_course_websocket_client_http(mocker):
+    p = pluvo.Pluvo(token='token', api_url='http://localhost:8000/rest/')
+    mocker.patch.object(p, 'get_token', return_value={'token': 'ws_token'})
+
+    client = p.course_websocket_client(123, 456)
+
+    assert client.ws_url == 'ws://localhost:8000/ws/course/'
+    assert client.token == 'ws_token'
+
+
+@pytest.mark.asyncio
+async def test_shampoo_client_call(mocker):
+    mock_ws = mocker.AsyncMock()
+    mock_ws.recv.return_value = (
+        '{"type": "response", "status": 200, "message": "ok", '
+        '"response_data": {"id": "test"}, "request_id": 1}'
+    )
+
+    mock_connect = mocker.patch(
+        'websockets.connect', return_value=mock_ws)
+
+    client = pluvo.ShampooClient(
+        'wss://api.pluvo.co/ws/course/', 'token123')
+    result = await client.call('set_chapter_item', {'chapter_id': 'A'})
+
+    mock_connect.assert_called_once_with(
+        'wss://api.pluvo.co/ws/course/?token=token123',
+        subprotocols=['shampoo'],
+    )
+    mock_ws.send.assert_called_once()
+    sent_data = mock_ws.send.call_args[0][0]
+    import json
+    sent = json.loads(sent_data)
+    assert sent['type'] == 'request'
+    assert sent['method'] == 'set_chapter_item'
+    assert sent['request_data'] == {'chapter_id': 'A'}
+    assert sent['request_id'] == 1
+
+    assert result == {'id': 'test'}
+
+
+@pytest.mark.asyncio
+async def test_shampoo_client_call_error(mocker):
+    mock_ws = mocker.AsyncMock()
+    mock_ws.recv.return_value = (
+        '{"type": "response", "status": 403, '
+        '"message": "Not allowed", "response_data": {}, "request_id": 1}'
+    )
+
+    mocker.patch('websockets.connect', return_value=mock_ws)
+
+    client = pluvo.ShampooClient(
+        'wss://api.pluvo.co/ws/course/', 'token123')
+
+    with pytest.raises(pluvo.PluvoAPIException) as exc_info:
+        await client.call('set_chapter_item', {'chapter_id': 'A'})
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.message == 'Not allowed'
+
+
+@pytest.mark.asyncio
+async def test_shampoo_client_context_manager(mocker):
+    mock_ws = mocker.AsyncMock()
+    mock_ws.recv.return_value = (
+        '{"type": "response", "status": 200, "message": "ok", '
+        '"response_data": {}, "request_id": 1}'
+    )
+
+    mocker.patch('websockets.connect', return_value=mock_ws)
+
+    url = 'wss://api.pluvo.co/ws/course/'
+    async with pluvo.ShampooClient(url, 'token') as client:
+        await client.call('get_course', {})
+
+    mock_ws.close.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_shampoo_client_close(mocker):
+    mock_ws = mocker.AsyncMock()
+    mock_ws.recv.return_value = (
+        '{"type": "response", "status": 200, "message": "ok", '
+        '"response_data": {}, "request_id": 1}'
+    )
+
+    mocker.patch('websockets.connect', return_value=mock_ws)
+
+    client = pluvo.ShampooClient('wss://api.pluvo.co/ws/course/', 'token')
+    await client.call('get_course', {})
+    await client.close()
+
+    mock_ws.close.assert_called_once()
+
+    # Calling close again should be a no-op
+    await client.close()
+    mock_ws.close.assert_called_once()
