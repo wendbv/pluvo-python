@@ -159,6 +159,8 @@ class Pluvo:
             self.api_url = DEFAULT_API_URL
 
         if api_ws_url is None:
+            # Convert REST API URL to WebSocket URL
+
             ws_url = self.api_url.replace('/rest/', '/ws/course/')
             if ws_url.startswith('http://'):
                 ws_url = 'ws://' + ws_url[7:]
@@ -391,8 +393,6 @@ class Pluvo:
         """
         token_response = self.get_token('manager', user_id, course_id)
         token = token_response['token']
-
-        # Convert REST API URL to WebSocket URL
 
         return ShampooClient(self.api_ws_url, token)
 
