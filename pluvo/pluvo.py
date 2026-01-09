@@ -1,6 +1,7 @@
 import itertools
 import requests
 import math
+import json
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -129,7 +130,7 @@ class Pluvo:
     Page sizes for the list API calls can be set using `page_size`."""
 
     def __init__(self, client_id=None, client_secret=None, token=None,
-                 api_url=None, page_size=None):
+                 api_url=None, api_ws_url=None, page_size=None):
         if not any([client_id, client_secret, token]):
             raise PluvoMisconfigured(
                 'You need to set either client_id and client_secret, or '
@@ -156,6 +157,18 @@ class Pluvo:
             self.api_url = api_url
         else:
             self.api_url = DEFAULT_API_URL
+
+        if api_ws_url is None:
+            # Convert REST API URL to WebSocket URL
+
+            ws_url = self.api_url.replace('/rest/', '/ws/course/')
+            if ws_url.startswith('http://'):
+                ws_url = 'ws://' + ws_url[7:]
+            elif ws_url.startswith('https://'):
+                ws_url = 'wss://' + ws_url[8:]
+            self.api_ws_url = ws_url
+        else:
+            self.api_ws_url = api_ws_url
 
         if page_size is not None:
             self.page_size = page_size
@@ -274,7 +287,8 @@ class Pluvo:
 
     def delete_organisation(self, org_id, permanent=False):
         if permanent:
-            return self._request('DELETE', 'organisation/{}/permanent/'.format(org_id))
+            return self._request(
+                'DELETE', 'organisation/{}/permanent/'.format(org_id))
         else:
             return self._request('DELETE', 'organisation/{}/'.format(org_id))
 
@@ -359,3 +373,166 @@ class Pluvo:
     def get_version(self):
         """Get the Pluvo API version."""
         return self._request('GET', 'version/')
+
+    def course_websocket_client(self, course_id, user_id):
+        """Get a ShampooClient for the course WebSocket endpoint.
+
+        This requires manager-level access to the course. The client should
+        be used as an async context manager or explicitly closed when done.
+
+        Args:
+            course_id: The ID of the course to connect to
+            user_id: The user ID to authenticate as (must have manager access)
+
+        Returns:
+            ShampooClient: A client for the course WebSocket endpoint
+
+        Usage:
+            async with pluvo.course_websocket_client(course_id, user_id) as ws:
+                await ws.call('set_chapter_item', {...})
+        """
+        token_response = self.get_token('manager', user_id, course_id)
+        token = token_response['token']
+
+        return ShampooClient(self.api_ws_url, token)
+
+
+class ShampooClient:
+    """Async client for Shampoo WebSocket protocol.
+
+    This client connects to a Shampoo WebSocket endpoint and allows calling
+    methods on it. The connection is established on first method call and
+    remains open until explicitly closed.
+
+    Usage:
+        client = ShampooClient(ws_url, token)
+        result = await client.call(
+            'set_chapter_item', {'chapter_id': 'A', ...}
+        )
+        await client.close()
+
+    Or as an async context manager:
+        async with ShampooClient(ws_url, token) as client:
+            result = await client.call('set_chapter_item', {...})
+    """
+
+    def __init__(self, ws_url, token):
+        """Initialize the ShampooClient.
+
+        Args:
+            ws_url: WebSocket URL (e.g., 'wss://api.pluvo.co/ws/course/')
+            token: Authentication token to pass as query parameter
+        """
+        self.ws_url = ws_url
+        self.token = token
+        self._ws = None
+        self._request_id = 0
+
+    async def _ensure_connected(self):
+        """Ensure WebSocket connection is established."""
+        if self._ws is not None:
+            return
+
+        try:
+            from websockets import connect
+        except ImportError:
+            raise PluvoMisconfigured(
+                "websockets package is required for WebSocket support. "
+                "Install it with: pip install websockets"
+            )
+
+        url = self.ws_url
+        if '?' in url:
+            url += '&token=' + self.token
+        else:
+            url += '?token=' + self.token
+
+        self._ws = await connect(
+            url,
+            subprotocols=['shampoo'],
+        )
+
+    async def call(self, method, request_data=None):
+        """Call a method on the WebSocket endpoint.
+
+        Args:
+            method: The method name to call (e.g., 'set_chapter_item')
+            request_data: Dictionary of data to pass to the method
+
+        Returns:
+            The response_data from the server
+
+        Raises:
+            PluvoAPIException: If the server returns an error status
+        """
+        await self._ensure_connected()
+
+        if request_data is None:
+            request_data = {}
+
+        self._request_id += 1
+        request = {
+            'type': 'request',
+            'method': method,
+            'request_data': request_data,
+            'request_id': self._request_id,
+        }
+
+        await self._ws.send(json.dumps(request))
+
+        # Keep reading until we get a response (skip push messages)
+        while True:
+            response_raw = await self._ws.recv()
+            response = json.loads(response_raw)
+
+            if response.get('type') == 'push':
+                # Server sent a push notification,
+                # skip it and wait for response
+                continue
+            elif response.get('type') == 'response':
+                break
+            else:
+                raise PluvoException(
+                    "Unexpected response type: {}".format(response.get('type'))
+                )
+
+        if response.get('request_id') != self._request_id:
+            raise PluvoException(
+                "Response request_id mismatch: expected {}, got {}".format(
+                    self._request_id, response.get('request_id'))
+            )
+
+        status = response.get('status', 0)
+        if status < 200 or status > 299:
+            raise PluvoAPIException(
+                response.get('message', 'Unknown error'),
+                status,
+                response.get('response_data', {})
+            )
+
+        return response.get('response_data', {})
+
+    async def close(self):
+        """Close the WebSocket connection."""
+        if self._ws is not None:
+            await self._ws.close()
+            self._ws = None
+
+    def __getattr__(self, name):
+        """Allow calling methods directly on the client.
+
+        Instead of:
+            await client.call('set_chapter_item', data)
+        You can use:
+            await client.set_chapter_item(data)
+        """
+        async def method_caller(request_data=None):
+            return await self.call(name, request_data)
+        return method_caller
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
+        return False
