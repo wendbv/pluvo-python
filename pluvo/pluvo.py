@@ -292,6 +292,11 @@ class Pluvo:
         else:
             return self._request('DELETE', 'organisation/{}/'.format(org_id))
 
+    def set_organisation_parent(self, organisation_id, parent_organisation_id):
+        return self._request(
+            'PUT', 'organisation/{}/parent/'.format(organisation_id),
+            {'parent_organisation_id': parent_organisation_id})
+
     def get_s3_upload_token(self, filename, media_type):
         return self._request(
             'GET',
