@@ -498,6 +498,17 @@ def test_pluvo_set_organisation_post(mocker):
     p._request.assert_called_once_with('POST', 'organisation/', {'test': 1})
 
 
+def test_pluvo_set_organisation_parent(mocker):
+    p = pluvo.Pluvo(token='token')
+    mocker.patch.object(p, '_request')
+
+    retval = p.set_organisation_parent(1, 2)
+
+    assert retval == p._request.return_value
+    p._request.assert_called_once_with(
+        'PUT', 'organisation/1/parent/', {'parent_organisation_id': 2})
+
+
 def test_pluvo_get_s3_upload_token(mocker):
     p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
@@ -748,3 +759,5 @@ async def test_shampoo_client_close(mocker):
     # Calling close again should be a no-op
     await client.close()
     mock_ws.close.assert_called_once()
+
+
