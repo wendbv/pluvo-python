@@ -543,6 +543,17 @@ def test_pluvo_get_trainer_token(mocker):
         'user_id': 1, 'course_id': 2, 'trainer_id': 3})
 
 
+def test_pluvo_get_token_with_return_url(mocker):
+    p = pluvo.Pluvo(token='token')
+    mocker.patch.object(p, '_request')
+
+    p.get_token('student', 1, 2, return_url='https://academy.example.com/')
+
+    p._request.assert_called_once_with('GET', 'user/token/student/', params={
+        'user_id': 1, 'course_id': 2,
+        'return_url': 'https://academy.example.com/'})
+
+
 def test_pluvo_get_user(mocker):
     p = pluvo.Pluvo(token='token')
     mocker.patch.object(p, '_request')
